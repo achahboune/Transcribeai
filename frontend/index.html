@@ -531,7 +531,12 @@ async function initSession() {
 sb.auth.onAuthStateChange((_event, session) => {
   currentSession = session;
   updateAuthUI();
-  if (session) loadProfile();
+  if (session) {
+    loadProfile();
+    resetInactivityTimer();
+  } else if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+  }
 });
 
 function updateAuthUI() {
@@ -567,12 +572,16 @@ async function handleSignOut() {
 }
 
 function resetPageState() {
-  document.getElementById('urlInput').value = '';
+  const urlField = document.getElementById('urlInput');
+  urlField.value = '';
+  urlField.setAttribute('readonly', 'readonly'); // re-arm the autofill guard
   document.getElementById('langSelect').value = 'auto';
   document.getElementById('statusLine').classList.remove('show', 'error');
+  document.getElementById('statusLine').textContent = '';
   document.getElementById('resultCard').classList.remove('show');
   document.getElementById('transcriptText').textContent = '';
   document.getElementById('usageWrap').classList.remove('show');
+  document.getElementById('usageFill').style.width = '0%';
 }
 
 function openAuthModal(mode) {
@@ -904,8 +913,27 @@ async function handleContactSubmit(event) {
   }
 }
 
+// ---------- Auto sign-out after inactivity ----------
+// Signs the user out automatically after 30 minutes with no interaction,
+// and clears any lingering page state (video link, transcript, etc.).
+const INACTIVITY_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+let inactivityTimer = null;
+
+function resetInactivityTimer() {
+  if (!currentSession) return;
+  if (inactivityTimer) clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(async () => {
+    await handleSignOut();
+  }, INACTIVITY_LIMIT_MS);
+}
+
+['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+  document.addEventListener(evt, resetInactivityTimer, { passive: true });
+});
+
 initSession();
 renderPayPalButtons();
+resetInactivityTimer();
 </script>
 </body>
 </html>

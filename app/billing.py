@@ -56,7 +56,7 @@ async def _get_paypal_access_token() -> str:
 
 async def _update_profile_plan(user_id: str, plan: str, paypal_subscription_id: str):
     async with httpx.AsyncClient(timeout=10) as client:
-        await client.patch(
+        resp = await client.patch(
             f"{settings.supabase_url}/rest/v1/profiles",
             params={"id": f"eq.{user_id}"},
             headers={
@@ -70,6 +70,14 @@ async def _update_profile_plan(user_id: str, plan: str, paypal_subscription_id: 
                 "minutes_used_this_period": 0,
                 "paypal_subscription_id": paypal_subscription_id,
             },
+        )
+    if resp.status_code not in (200, 204):
+        # Surface the real Supabase error instead of failing silently —
+        # the payment already succeeded, so we need to know exactly why
+        # activation failed (e.g. missing column, RLS issue).
+        raise HTTPException(
+            status_code=502,
+            detail=f"Payment succeeded but plan activation failed in our database ({resp.status_code}): {resp.text[:200]}",
         )
 
 
