@@ -517,7 +517,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const API_BASE = ""; // same-origin: page is served by the same Render service as the API
 
 const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Use sessionStorage instead of the default localStorage so the session
+// does not survive closing the tab/browser — the person must sign in
+// again each time they open the site, by design.
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true }
+});
 
 let currentSession = null;
 let authMode = "signin";
@@ -835,14 +840,16 @@ async function renderPayPalButtons() {
               },
               body: JSON.stringify({ subscription_id: data.subscriptionID, plan })
             });
+            const result = await res.json().catch(() => ({}));
             if (res.ok) {
               alert(`Subscribed to ${plan === 'creator' ? 'Creator' : 'Pro'}! Your plan is now active.`);
               loadProfile();
             } else {
-              alert('Payment approved, but activating your plan failed. Contact support with this ID: ' + data.subscriptionID);
+              const detail = result.detail || `Server returned ${res.status}`;
+              alert(`Payment approved, but activating your plan failed:\n${detail}\n\nSubscription ID: ${data.subscriptionID}`);
             }
           } catch (e) {
-            alert('Payment approved, but activating your plan failed. Contact support with this ID: ' + data.subscriptionID);
+            alert(`Payment approved, but activating your plan failed:\n${e.message}\n\nSubscription ID: ${data.subscriptionID}`);
           }
         },
         onError: function () {
