@@ -50,7 +50,13 @@ async def _get_paypal_access_token() -> str:
             data={"grant_type": "client_credentials"},
         )
     if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail="Could not authenticate with PayPal.")
+        # Surface the real PayPal error (e.g. invalid_client) instead of a
+        # generic message — this is the only way to diagnose credential or
+        # environment (sandbox vs live) mismatches from the deployed app.
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not authenticate with PayPal ({resp.status_code}, env={settings.paypal_env}): {resp.text[:200]}",
+        )
     return resp.json()["access_token"]
 
 
