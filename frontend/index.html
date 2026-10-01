@@ -373,6 +373,9 @@
       </button>
     </div>
 
+    <label class="field-label" style="margin-top:14px">CUSTOM DICTIONARY <span style="color:var(--text-faint)">(Creator / Pro)</span></label>
+    <input type="text" id="dictionaryInput" placeholder="Names or terms, separated by commas" autocomplete="off">
+
     <div class="status-line" id="statusLine"></div>
 
     <div class="usage-bar-wrap" id="usageWrap">
@@ -393,6 +396,17 @@
       </button>
     </div>
     <div class="transcript-text" id="transcriptText"></div>
+    <div id="featureActions" style="display:none; gap:8px; flex-wrap:wrap; margin-top:16px">
+      <button class="copy-btn" onclick="handleSummary()"><span>AI summary</span></button>
+      <button class="copy-btn" onclick="handleExport('txt')"><span>TXT</span></button>
+      <button class="copy-btn" onclick="handleExport('docx')"><span>DOCX</span></button>
+      <button class="copy-btn" onclick="handleExport('srt')"><span>SRT</span></button>
+      <button class="copy-btn" onclick="handleExport('vtt')"><span>VTT</span></button>
+    </div>
+    <div id="summaryCard" style="display:none; margin-top:16px; padding:14px; border-top:1px solid var(--line)">
+      <div class="result-title">AI SUMMARY</div>
+      <div id="summaryText" class="transcript-text" style="margin-top:8px; white-space:pre-wrap"></div>
+    </div>
   </div>
 
   <section class="pricing" id="pricing">
@@ -426,7 +440,7 @@
             <li>50+ languages</li>
             <li>AI summary</li>
             <li>TXT / DOCX / SRT export</li>
-            <li>Speaker diarization</li>
+            <li>Timestamped speaker turns</li>
             <li>Custom dictionary (names, jargon)</li>
             <li>Priority email support</li>
           </ul>
@@ -442,11 +456,11 @@
             <li>30 h / month</li>
             <li>Everything in Creator</li>
             <li>Advanced subtitles</li>
-            <li>Advanced diarization</li>
-            <li>Team / multi-user</li>
+            <li>Advanced SRT / VTT subtitles</li>
+            <li>Team / multi-user (coming soon)</li>
             <li>Priority processing</li>
             <li>API access</li>
-            <li>Shared team glossary</li>
+            <li>Shared team glossary (coming soon)</li>
             <li>7-day dedicated support</li>
           </ul>
           <div class="paypal-btn-wrap" id="paypal-btn-pro"></div>
@@ -526,6 +540,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 let currentSession = null;
 let authMode = "signin";
+let lastResult = null;
 
 async function initSession() {
   const { data } = await sb.auth.getSession();
@@ -585,6 +600,11 @@ function resetPageState() {
   document.getElementById('statusLine').textContent = '';
   document.getElementById('resultCard').classList.remove('show');
   document.getElementById('transcriptText').textContent = '';
+  document.getElementById('featureActions').style.display = 'none';
+  document.getElementById('summaryCard').style.display = 'none';
+  document.getElementById('summaryText').textContent = '';
+  document.getElementById('dictionaryInput').value = '';
+  lastResult = null;
   document.getElementById('usageWrap').classList.remove('show');
   document.getElementById('usageFill').style.width = '0%';
 }
@@ -761,13 +781,15 @@ async function handleTranscribe() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${currentSession.access_token}`
       },
-      body: JSON.stringify({ url, language })
+        body: JSON.stringify({ url, language, dictionary: document.getElementById('dictionaryInput').value })
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Transcription failed.');
 
     document.getElementById('transcriptText').textContent = data.transcript;
+    lastResult = data;
+    document.getElementById('featureActions').style.display = 'flex';
     document.getElementById('resultMeta').textContent = `TRANSCRIPT · ${data.platform.toUpperCase()} · ${Math.round(data.duration_seconds || 0)}s`;
     document.getElementById('resultCard').classList.add('show');
     statusLine.classList.remove('show');
@@ -789,6 +811,49 @@ function handleCopy() {
     label.textContent = 'Copied';
     setTimeout(() => { btn.classList.remove('copied'); label.textContent = 'Copy'; }, 1800);
   });
+}
+
+async function handleSummary() {
+  if (!lastResult || !currentSession) return;
+  const summaryCard = document.getElementById('summaryCard');
+  const summaryText = document.getElementById('summaryText');
+  summaryText.textContent = 'Generating summary…';
+  summaryCard.style.display = 'block';
+  try {
+    const res = await fetch(`${API_BASE}/api/summary`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentSession.access_token}` },
+      body: JSON.stringify({ transcript: lastResult.transcript, language: lastResult.detected_language || 'auto' })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Summary failed.');
+    summaryText.textContent = data.summary;
+  } catch (err) {
+    summaryText.textContent = err.message;
+  }
+}
+
+async function handleExport(fileFormat) {
+  if (!lastResult || !currentSession) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/export/${fileFormat}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentSession.access_token}` },
+      body: JSON.stringify({ transcript: lastResult.transcript, language: lastResult.detected_language || 'auto', segments: lastResult.segments || [] })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail || 'Export failed.');
+    }
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `transcribeai-transcript.${fileFormat}`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 async function handleUpgradeClick(plan) {

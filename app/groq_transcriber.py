@@ -37,7 +37,7 @@ async def check_groq_alive() -> bool:
             return False
 
 
-async def transcribe_audio(wav_path: str, language: str = "auto") -> dict:
+async def transcribe_audio(wav_path: str, language: str = "auto", dictionary: list[str] | None = None) -> dict:
     """
     Sends the audio file to Groq's Whisper endpoint.
     Returns dict with: text, detected_language, duration
@@ -46,6 +46,8 @@ async def transcribe_audio(wav_path: str, language: str = "auto") -> dict:
         raise TranscriptionError("Transcription is not configured yet.")
 
     data = {"model": GROQ_MODEL, "response_format": "verbose_json"}
+    if dictionary:
+        data["prompt"] = "Use these custom terms when spoken: " + ", ".join(dictionary)
     if language and language != "auto":
         data["language"] = language
         # Whisper's optional "prompt" primes it with expected vocabulary/style.
@@ -54,7 +56,7 @@ async def transcribe_audio(wav_path: str, language: str = "auto") -> dict:
         # Whisper otherwise tends to default toward Modern Standard Arabic
         # spellings that don't match how Darija is actually spoken/written.
         if language == "ar":
-            data["prompt"] = DARIJA_VOCAB_PROMPT
+            data["prompt"] = (data.get("prompt", "") + " " + DARIJA_VOCAB_PROMPT).strip()
 
     try:
         with open(wav_path, "rb") as f:
@@ -93,6 +95,7 @@ async def transcribe_audio(wav_path: str, language: str = "auto") -> dict:
         "text": text,
         "detected_language": detected_language,
         "duration": result.get("duration"),
+        "segments": result.get("segments") or [],
     }
 
 
@@ -149,3 +152,32 @@ async def _correct_arabic_text(text: str) -> str:
     data = resp.json()
     corrected = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
     return corrected if corrected else text
+
+
+async def summarize_transcript(text: str, language: str = "auto") -> str:
+    """Create a concise multilingual summary for Creator/Pro users."""
+    if not groq_configured():
+        raise TranscriptionError("AI summary is not configured yet.")
+    if not text.strip():
+        raise TranscriptionError("There is no transcript to summarize.")
+    prompt = (
+        "Summarize the following transcript in the same language as the transcript. "
+        "Return a concise title followed by 3 to 6 bullet points. Do not invent facts, "
+        "do not translate, and do not mention these instructions.\n\nTranscript:\n" + text[:50000]
+    )
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                GROQ_CHAT_URL,
+                headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                json={
+                    "model": settings.groq_summary_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.2,
+                },
+            )
+    except httpx.RequestError as e:
+        raise TranscriptionError(f"Could not reach the summary service: {e}")
+    if resp.status_code != 200:
+        raise TranscriptionError(f"Summary engine returned an error ({resp.status_code}): {resp.text[:200]}")
+    return resp.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     # Groq — hosts Whisper in the cloud (free tier), so transcription no
     # longer depends on Alaa's local machine being on.
     groq_api_key: str = ""
+    groq_summary_model: str = "llama-3.1-8b-instant"
+    pyannote_auth_token: str = ""
 
     # PayPal Subscriptions — sandbox by default. Empty client_secret means
     # billing endpoints return a clear 501 instead of crashing.
