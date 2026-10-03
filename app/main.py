@@ -11,7 +11,7 @@ TranscribeAI — Render orchestrator.
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field, HttpUrl
 
 from .config import settings, PLAN_LIMITS_MINUTES
@@ -48,6 +48,25 @@ app.include_router(contact_router)
 # Supabase. Served from the same origin as the API, so no CORS issues either.
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 if FRONTEND_DIR.exists():
+    @app.get("/robots.txt", response_class=PlainTextResponse)
+    def robots_txt():
+        return (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /api/\n"
+            "Disallow: /auth/\n"
+            "Sitemap: https://transcribeai.site/sitemap.xml\n"
+        )
+
+    @app.get("/sitemap.xml", response_class=PlainTextResponse)
+    def sitemap_xml():
+        return (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            '  <url><loc>https://transcribeai.site/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n'
+            '</urlset>\n'
+        )
+
     @app.get("/")
     def serve_index():
         return FileResponse(str(FRONTEND_DIR / "index.html"))

@@ -3,7 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TranscribeAI — Turn any video into text</title>
+<title>AI Video Transcription Online | TranscribeAI</title>
+<meta name="description" content="Transcribe videos from YouTube, TikTok, Instagram, Facebook and X with AI. Get clean transcripts, summaries and subtitle exports in minutes.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="TranscribeAI">
+<link rel="canonical" href="https://transcribeai.site/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TranscribeAI">
+<meta property="og:title" content="AI Video Transcription Online | TranscribeAI">
+<meta property="og:description" content="Turn public video links into clean transcripts, summaries and subtitle files with AI.">
+<meta property="og:url" content="https://transcribeai.site/">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AI Video Transcription Online | TranscribeAI">
+<meta name="twitter:description" content="Transcribe public videos, create summaries and export subtitles with TranscribeAI.">
+<meta name="theme-color" content="#82CAFF">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "TranscribeAI",
+  "url": "https://transcribeai.site/",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Web",
+  "description": "AI video transcription tool with summaries and subtitle exports.",
+  "offers": [
+    {"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD"},
+    {"@type":"Offer","name":"Creator","price":"9","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Pro","price":"19","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1M"}}
+  ],
+  "featureList": ["Video transcription", "AI summaries", "TXT export", "DOCX export", "SRT export", "VTT export"]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -341,6 +372,16 @@
     </div>
   </section>
 
+  <section class="card" aria-labelledby="how-it-works-title" style="margin-bottom:20px;">
+    <h2 id="how-it-works-title" style="font-size:22px;margin-bottom:10px;">AI video transcription for creators and teams</h2>
+    <p style="color:var(--text-dim);max-width:760px;">TranscribeAI turns public video links into searchable text. Use it to review interviews, repurpose social videos, create captions, or prepare a concise summary without listening to the entire recording.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:18px;">
+      <div><strong>1. Paste a link</strong><p style="color:var(--text-faint);font-size:14px;margin-top:4px;">Use a public YouTube, TikTok, Instagram, Facebook or X video.</p></div>
+      <div><strong>2. Choose a language</strong><p style="color:var(--text-faint);font-size:14px;margin-top:4px;">Detect the language automatically or select one before processing.</p></div>
+      <div><strong>3. Export your result</strong><p style="color:var(--text-faint);font-size:14px;margin-top:4px;">Copy the transcript or download TXT, DOCX, SRT and VTT files.</p></div>
+    </div>
+  </section>
+
   <section class="card">
     <label class="field-label">VIDEO LINK</label>
     <div class="url-row">
@@ -407,7 +448,23 @@
       <div class="result-title">AI SUMMARY</div>
       <div id="summaryText" class="transcript-text" style="margin-top:8px; white-space:pre-wrap"></div>
     </div>
-  </div>
+  </section>
+
+  <section class="card" aria-labelledby="faq-title" style="margin-top:20px;">
+    <h2 id="faq-title" style="font-size:22px;margin-bottom:12px;">Frequently asked questions</h2>
+    <details style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <summary><strong>What videos can I transcribe?</strong></summary>
+      <p style="color:var(--text-dim);margin-top:8px;">TranscribeAI accepts public video links from YouTube, TikTok, Instagram, Facebook and X, subject to each platform’s availability and access rules.</p>
+    </details>
+    <details style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <summary><strong>Can I export subtitles?</strong></summary>
+      <p style="color:var(--text-dim);margin-top:8px;">Creator and Pro users can export timestamped SRT and VTT subtitle files. TXT export is available on the Free plan.</p>
+    </details>
+    <details style="padding:10px 0;">
+      <summary><strong>Do I need a credit card to start?</strong></summary>
+      <p style="color:var(--text-dim);margin-top:8px;">No. You can create a Free account without a credit card and upgrade only when you need more minutes or formats.</p>
+    </details>
+  </section>
 
   <section class="pricing" id="pricing">
     <div class="pricing-head">
@@ -857,10 +914,10 @@ async function handleUpgradeClick(plan) {
 }
 
 // ---------- PayPal Subscriptions ----------
-const PAYPAL_CLIENT_ID = "BAAoWkwL88KivHMtgfq8z9-O5-bi7zW3Xr1K30IezJTOjxQlpW4pBCVh40j8MjnubQBguOaQ5p5pd_wF1E";
+const PAYPAL_CLIENT_ID = "BAADiKsFGaX64oemgWeXBvYfiBxvVjD43e_Az_Sz720dMqOf_Jrh-hlJpb_deSSdVKYybyEYztN0T5JI-g";
 const PAYPAL_PLAN_IDS = {
-  creator: "P-548785610H591143WNKZJK4A",
-  pro: "P-49833516L7047143LNKWQMCY"
+  creator: "P-65J00218TV741221ANK2BUBA",
+  pro: "P-0WT093369V964314UNK2PJYI"
 };
 
 function loadPayPalSdk() {
