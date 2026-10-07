@@ -74,6 +74,10 @@ if FRONTEND_DIR.exists():
     def serve_index():
         return FileResponse(str(FRONTEND_DIR / "index.html"))
 
+    @app.get("/favicon.svg")
+    def serve_favicon():
+        return FileResponse(str(FRONTEND_DIR / "favicon.svg"), media_type="image/svg+xml")
+
 
 class TranscribeRequest(BaseModel):
     url: HttpUrl
