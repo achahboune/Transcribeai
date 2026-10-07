@@ -95,8 +95,6 @@
   .auth-area{display:flex; align-items:center; justify-content:flex-end; gap:12px; font-size:14px;}
   header.top > .logo{justify-self:start;}
   header.top > .auth-area{justify-self:end;}
-  .top-contact{justify-self:center; color:var(--text-dim); font-size:14px; text-decoration:none; border-bottom:1px solid transparent;}
-  .top-contact:hover{color:var(--text); border-color:var(--text);}
   .pill{
     padding:6px 12px; border-radius:100px; font-size:12.5px;
     background:var(--bg-raised); color:var(--text-dim); border:1px solid var(--border);
@@ -321,7 +319,6 @@
     .logo{font-size:14px; gap:8px;}
     .auth-area{gap:8px;}
     .auth-area a.btn-ghost{display:none;}
-    .top-contact{grid-column:1 / -1; grid-row:2; margin-top:12px;}
     .pill{max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
     .btn-signin{padding:8px 12px; font-size:13px;}
     .hero{padding:4px 0 22px;}
@@ -350,7 +347,6 @@
     </div>
     TranscribeAI
   </div>
-  <a class="top-contact" href="#contact">Get in touch</a>
   <div class="auth-area" id="authArea">
     <span class="btn-ghost" onclick="openAuthModal('signin')">Sign in</span>
     <button class="btn-signin" onclick="openAuthModal('signup')">Get started</button>
@@ -595,14 +591,12 @@ function updateAuthUI() {
   if (currentSession) {
     const email = currentSession.user.email;
     area.innerHTML = `
-      <a class="btn-ghost" href="#contact">Get in touch</a>
       <span class="pill">${email}</span>
       <span class="btn-ghost" onclick="handleSignOut()">Sign out</span>
     `;
     if (freeBtn) freeBtn.textContent = 'Your current plan';
   } else {
     area.innerHTML = `
-      <a class="btn-ghost" href="#contact">Get in touch</a>
       <span class="btn-ghost" onclick="openAuthModal('signin')">Sign in</span>
       <button class="btn-signin" onclick="openAuthModal('signup')">Get started</button>
     `;
@@ -901,7 +895,7 @@ function loadPayPalSdk() {
   return new Promise((resolve, reject) => {
     if (window.paypal) { resolve(window.paypal); return; }
     const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription`;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription&locale=en_US`;
     script.onload = () => resolve(window.paypal);
     script.onerror = () => reject(new Error('Could not load PayPal.'));
     document.head.appendChild(script);
