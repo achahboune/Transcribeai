@@ -21,6 +21,21 @@ Le site contient maintenant :
 - `/sitemap.xml` avec l’URL publique canonique ;
 - une structure H1/H2 lisible sans exécuter JavaScript.
 
+### Pages SEO publiées dans le code
+
+Le site expose maintenant des pages éditoriales dédiées, chacune avec son propre title, meta description, canonical, données structurées, contenu original et liens internes :
+
+- `/youtube-transcription`
+- `/tiktok-transcription`
+- `/instagram-transcription`
+- `/video-to-text`
+- `/audio-to-text`
+- `/ai-subtitle-generator`
+- `/arabic-transcription`
+- `/french-transcription`
+
+Le sitemap FastAPI les inclut automatiquement. Ne pas multiplier ces pages sans nouvelle intention de recherche ou contenu réellement distinct.
+
 ## Workflow n8n recommandé
 
 ### Workflow A, surveillance quotidienne

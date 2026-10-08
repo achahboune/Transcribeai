@@ -36,6 +36,17 @@
   "featureList": ["Video transcription", "AI summaries", "TXT export", "DOCX export", "SRT export", "VTT export"]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"What videos can I transcribe?","acceptedAnswer":{"@type":"Answer","text":"Public links from supported major video platforms can be transcribed, subject to availability and access rules."}},
+    {"@type":"Question","name":"Can I export subtitles?","acceptedAnswer":{"@type":"Answer","text":"Creator and Pro users can export SRT and VTT subtitle files. TXT export is available on the Free plan."}},
+    {"@type":"Question","name":"Do I need a credit card to start?","acceptedAnswer":{"@type":"Answer","text":"No. The Free plan can be started without a credit card."}}
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -336,6 +347,7 @@
     .hero h1{letter-spacing:-0.02em;}
     .plan-price b{font-size:22px;}
   }
+  @media (max-width:700px){.seo-grid{grid-template-columns:1fr !important;}}
 </style>
 </head>
 <body>
@@ -356,8 +368,8 @@
 <div class="shell">
 
   <section class="hero">
-    <h1>Turn video into clear words.</h1>
-    <p>Transcribe, summarize, and subtitle in minutes.</p>
+    <h1>AI Video Transcription Online</h1>
+    <p>Turn video into clear words. Transcribe public video links, create AI summaries, and export subtitles in minutes.</p>
   </section>
 
   <section class="card">
@@ -424,6 +436,28 @@
       <div id="summaryText" class="transcript-text" style="margin-top:8px; white-space:pre-wrap"></div>
     </div>
   </div>
+
+  <section class="seo-content card" aria-labelledby="seo-title" style="margin-top:48px;">
+    <h2 id="seo-title">AI video transcription made simple</h2>
+    <p>TranscribeAI turns public video links into readable text so you can search, edit, summarize, and reuse spoken content. Choose a language or let the service detect it automatically, then work from the generated transcript.</p>
+    <div class="seo-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;">
+      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">From popular video links</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Paste a public link from supported video platforms and start a transcription from one place.</p></div>
+      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Transcript to useful files</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Keep the transcript as text or use Creator and Pro exports for DOCX, SRT and VTT workflows.</p></div>
+      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Multilingual transcription</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">English, French, Arabic and other supported languages are available from the language selector.</p></div>
+      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Built for real workflows</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Use transcripts for research, interviews, content repurposing, subtitles, notes and searchable archives.</p></div>
+    </div>
+    <h2 style="margin-top:28px;font-size:22px;">Popular transcription tools</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:9px;">
+      <a href="/youtube-transcription">YouTube transcription</a>
+      <a href="/tiktok-transcription">TikTok transcription</a>
+      <a href="/instagram-transcription">Instagram transcription</a>
+      <a href="/video-to-text">Video to text</a>
+      <a href="/audio-to-text">Audio to text</a>
+      <a href="/ai-subtitle-generator">AI subtitle generator</a>
+      <a href="/arabic-transcription">Arabic transcription</a>
+      <a href="/french-transcription">French transcription</a>
+    </div>
+  </section>
 
   <section class="pricing" id="pricing">
     <div class="pricing-head">

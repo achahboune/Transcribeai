@@ -58,25 +58,68 @@ if FRONTEND_DIR.exists():
             "Sitemap: https://transcribeai.site/sitemap.xml\n"
         )
 
+    SEO_PAGES = [
+        "youtube-transcription",
+        "tiktok-transcription",
+        "instagram-transcription",
+        "video-to-text",
+        "audio-to-text",
+        "ai-subtitle-generator",
+        "arabic-transcription",
+        "french-transcription",
+    ]
+
     @app.get("/sitemap.xml", response_class=Response)
     def sitemap_xml():
-        return Response(
-            content=(
-            '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-            '  <url><loc>https://transcribeai.site/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n'
-            '</urlset>\n'
-            ),
-            media_type="application/xml",
-        )
+        urls = [
+            ("https://transcribeai.site/", "weekly", "1.0"),
+            *[(f"https://transcribeai.site/{slug}", "monthly", "0.8") for slug in SEO_PAGES],
+        ]
+        body = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+        for loc, changefreq, priority in urls:
+            body.append(f"  <url><loc>{loc}</loc><changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>")
+        body.append('</urlset>')
+        return Response(content="\n".join(body) + "\n", media_type="application/xml")
 
     @app.get("/")
     def serve_index():
         return FileResponse(str(FRONTEND_DIR / "index.html"))
 
+    @app.get("/seo.css")
+    def serve_seo_css():
+        return FileResponse(str(FRONTEND_DIR / "seo.css"), media_type="text/css")
+
     @app.get("/favicon.svg")
     def serve_favicon():
         return FileResponse(str(FRONTEND_DIR / "favicon.svg"), media_type="image/svg+xml")
+
+    def serve_seo_page(slug: str):
+        page = FRONTEND_DIR / "seo" / f"{slug}.html"
+        return FileResponse(str(page), media_type="text/html; charset=utf-8")
+
+    @app.get("/youtube-transcription")
+    def youtube_transcription(): return serve_seo_page("youtube-transcription")
+
+    @app.get("/tiktok-transcription")
+    def tiktok_transcription(): return serve_seo_page("tiktok-transcription")
+
+    @app.get("/instagram-transcription")
+    def instagram_transcription(): return serve_seo_page("instagram-transcription")
+
+    @app.get("/video-to-text")
+    def video_to_text(): return serve_seo_page("video-to-text")
+
+    @app.get("/audio-to-text")
+    def audio_to_text(): return serve_seo_page("audio-to-text")
+
+    @app.get("/ai-subtitle-generator")
+    def ai_subtitle_generator(): return serve_seo_page("ai-subtitle-generator")
+
+    @app.get("/arabic-transcription")
+    def arabic_transcription(): return serve_seo_page("arabic-transcription")
+
+    @app.get("/french-transcription")
+    def french_transcription(): return serve_seo_page("french-transcription")
 
 
 class TranscribeRequest(BaseModel):
