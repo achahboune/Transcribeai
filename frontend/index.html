@@ -103,9 +103,17 @@
     flex-shrink:0;
   }
   .logo-mark svg{width:14px; height:14px;}
-  .auth-area{display:flex; align-items:center; justify-content:flex-end; gap:12px; font-size:14px;}
+  .auth-area{display:flex; align-items:center; justify-content:center; gap:12px; font-size:14px;}
   header.top > .logo{justify-self:start;}
-  header.top > .auth-area{justify-self:end;}
+  header.top > .auth-area{grid-column:2; justify-self:center;}
+  .platform-picker{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px;}
+  .platform-option{display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border); background:var(--bg-inset); color:var(--text-dim); border-radius:8px; padding:8px 10px; font:500 12px var(--font); cursor:pointer; transition:border-color .15s ease, background .15s ease, transform .15s ease;}
+  .platform-option:hover,.platform-option.active{border-color:var(--signal); background:var(--signal-soft); color:var(--text);}
+  .platform-option:focus-visible{outline:2px solid var(--signal); outline-offset:2px;}
+  .platform-icon{width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; line-height:1;}
+  .platform-icon.youtube{color:#E62117;} .platform-icon.tiktok{color:#111;} .platform-icon.instagram{color:#C13584;} .platform-icon.facebook{color:#1877F2;} .platform-icon.x-platform{color:#111;}
+  .contact-head{text-align:center;}
+  .contact-head p{max-width:600px; margin:8px auto 0;}
   .pill{
     padding:6px 12px; border-radius:100px; font-size:12.5px;
     background:var(--bg-raised); color:var(--text-dim); border:1px solid var(--border);
@@ -372,7 +380,14 @@
     <p>Turn video into clear words. Transcribe public video links, create AI summaries, and export subtitles in minutes.</p>
   </section>
 
-  <section class="card">
+      <section class="card">
+    <div class="platform-picker" role="group" aria-label="Supported video platforms">
+      <button type="button" class="platform-option active" data-platform="YouTube" aria-pressed="true"><span class="platform-icon youtube" aria-hidden="true">▶</span>YouTube</button>
+      <button type="button" class="platform-option" data-platform="TikTok" aria-pressed="false"><span class="platform-icon tiktok" aria-hidden="true">♪</span>TikTok</button>
+      <button type="button" class="platform-option" data-platform="Instagram" aria-pressed="false"><span class="platform-icon instagram" aria-hidden="true">◎</span>Instagram</button>
+      <button type="button" class="platform-option" data-platform="Facebook" aria-pressed="false"><span class="platform-icon facebook" aria-hidden="true">f</span>Facebook</button>
+      <button type="button" class="platform-option" data-platform="X" aria-pressed="false"><span class="platform-icon x-platform" aria-hidden="true">𝕏</span>X</button>
+    </div>
     <label class="field-label">VIDEO LINK</label>
     <div class="url-row">
       <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public video link..." autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
@@ -586,6 +601,21 @@
 </div>
 
 <script>
+document.querySelectorAll('.platform-option').forEach((button) => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.platform-option').forEach((option) => {
+      const active = option === button;
+      option.classList.toggle('active', active);
+      option.setAttribute('aria-pressed', String(active));
+    });
+    const input = document.getElementById('urlInput');
+    if (input) {
+      input.placeholder = 'Paste a public ' + button.dataset.platform + ' video link...';
+      input.focus();
+    }
+  });
+});
+
 const SUPABASE_URL = "https://pulwpdgqcopnqzesnumj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bHdwZGdxY29wbnF6ZXNudW1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MTgzNjIsImV4cCI6MjEwNDE5NDM2Mn0.Qido_icFbOHXhamsW3U4nY92awhecEhO7fIASN66oq8";
 const API_BASE = ""; // same-origin: page is served by the same Render service as the API
