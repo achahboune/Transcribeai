@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     paypal_client_secret: str = ""
     paypal_plan_creator: str = ""  # P-XXXXXXXXXXXXXXXXXXXX
     paypal_plan_pro: str = ""      # P-XXXXXXXXXXXXXXXXXXXX
-    frontend_url: str = "https://transcribe-u5sf.onrender.com"
+    frontend_url: str = "https://transcribeai.site"
 
     max_job_seconds: int = 900  # 15 min hard cap per video for the MVP
 

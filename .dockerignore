@@ -4,3 +4,8 @@ transcribeai-fly/**/__pycache__
 transcribeai-fly/**/*.pyc
 transcribeai-fly/**/.DS_Store
 fly.toml
+
+.env
+.git
+__pycache__/
+*.pyc

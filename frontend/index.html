@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Video Transcription Online | TranscribeAI</title>
-<meta name="description" content="Transcribe videos from YouTube, TikTok, Instagram, Facebook and X with AI. Get clean transcripts, summaries and subtitle exports in minutes.">
+<meta name="description" content="Transcribe videos from TikTok, Instagram, Facebook and X with AI. Get clean transcripts, summaries and subtitle exports in minutes.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="TranscribeAI">
 <link rel="canonical" href="https://transcribeai.site/">
@@ -111,7 +111,7 @@
   .platform-option:hover,.platform-option.active{border-color:var(--signal); background:var(--signal-soft); color:var(--text);}
   .platform-option:focus-visible{outline:2px solid var(--signal); outline-offset:2px;}
   .platform-icon{width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; line-height:1;}
-  .platform-icon.youtube{color:#E62117;} .platform-icon.tiktok{color:#111;} .platform-icon.instagram{color:#C13584;} .platform-icon.facebook{color:#1877F2;} .platform-icon.x-platform{color:#111;}
+  .platform-icon.tiktok{color:#111;} .platform-icon.instagram{color:#C13584;} .platform-icon.facebook{color:#1877F2;} .platform-icon.x-platform{color:#111;}
   .contact-head{text-align:center;}
   .contact-head p{max-width:600px; margin:8px auto 0;}
   /* Header actions aligned to the right edge of the header */
@@ -411,15 +411,14 @@
 
       <section class="card">
     <div class="platform-picker" role="group" aria-label="Supported video platforms">
-      <button type="button" class="platform-option active" data-platform="YouTube" aria-pressed="true"><span class="platform-icon youtube" aria-hidden="true">▶</span>YouTube</button>
-      <button type="button" class="platform-option" data-platform="TikTok" aria-pressed="false"><span class="platform-icon tiktok" aria-hidden="true">♪</span>TikTok</button>
+      <button type="button" class="platform-option active" data-platform="TikTok" aria-pressed="true"><span class="platform-icon tiktok" aria-hidden="true">♪</span>TikTok</button>
       <button type="button" class="platform-option" data-platform="Instagram" aria-pressed="false"><span class="platform-icon instagram" aria-hidden="true">◎</span>Instagram</button>
       <button type="button" class="platform-option" data-platform="Facebook" aria-pressed="false"><span class="platform-icon facebook" aria-hidden="true">f</span>Facebook</button>
       <button type="button" class="platform-option" data-platform="X" aria-pressed="false"><span class="platform-icon x-platform" aria-hidden="true">𝕏</span>X</button>
     </div>
     <label class="field-label">VIDEO LINK</label>
     <div class="url-row">
-      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
+      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public TikTok video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
     </div>
 
     <label class="field-label">LANGUAGE</label>
@@ -492,7 +491,6 @@
     </div>
     <h2 style="margin-top:28px;font-size:22px;">Popular transcription tools</h2>
     <div style="display:flex;flex-wrap:wrap;gap:9px;">
-      <a href="/seo/youtube-transcription.html">YouTube transcription</a>
       <a href="/seo/tiktok-transcription.html">TikTok transcription</a>
       <a href="/seo/instagram-transcription.html">Instagram transcription</a>
       <a href="/seo/video-to-text.html">Video to text</a>

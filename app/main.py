@@ -7,11 +7,12 @@ TranscribeAI — Render orchestrator.
 4. Returns the transcript and updates the user's quota usage.
 """
 
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field, HttpUrl
 
 from .config import settings, PLAN_LIMITS_MINUTES
@@ -61,8 +62,10 @@ app.include_router(contact_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
+# Max simultaneous downloads/conversions (the Oracle VM has 1 CPU core).
+DOWNLOAD_SEMAPHORE = asyncio.Semaphore(2)
+
 SEO_PAGES = [
-    "youtube-transcription",
     "tiktok-transcription",
     "instagram-transcription",
     "video-to-text",
@@ -181,8 +184,9 @@ def serve_seo_page(slug: str):
 
 
 @app.get("/seo/youtube-transcription.html")
-def youtube_transcription():
-    return serve_seo_page("youtube-transcription")
+def youtube_transcription_removed():
+    # YouTube is no longer supported: permanently redirect the old SEO URL.
+    return RedirectResponse(url="/", status_code=301)
 
 
 @app.get("/seo/tiktok-transcription.html")
@@ -354,6 +358,15 @@ async def transcribe(
     platform = detect_platform(url)
     job_dir = None
 
+    if platform == "youtube":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "YouTube links are not supported. Use a public TikTok, "
+                "Instagram, Facebook or X video link."
+            ),
+        )
+
     remaining_minutes = minutes_limit - minutes_used
     max_seconds = min(
         settings.max_job_seconds,
@@ -361,10 +374,14 @@ async def transcribe(
     )
 
     try:
-        download = download_audio(
-            url,
-            max_duration_seconds=max_seconds,
-        )
+        # Run the blocking yt-dlp/ffmpeg download in a worker thread so the
+        # server stays responsive, and allow only a few at once (1 CPU core).
+        async with DOWNLOAD_SEMAPHORE:
+            download = await asyncio.to_thread(
+                download_audio,
+                url,
+                max_duration_seconds=max_seconds,
+            )
 
         job_dir = download["job_dir"]
 

@@ -25,7 +25,6 @@ Le site contient maintenant :
 
 Le site expose maintenant des pages éditoriales dédiées, chacune avec son propre title, meta description, canonical, données structurées, contenu original et liens internes :
 
-- `/youtube-transcription`
 - `/tiktok-transcription`
 - `/instagram-transcription`
 - `/video-to-text`
@@ -91,7 +90,6 @@ Le workflow ne doit pas publier le même texte sur tous les réseaux ni déposer
 
 Commencer par 6 à 10 pages utiles, écrites pour des besoins réels :
 
-- transcription YouTube en ligne ;
 - transcription TikTok ;
 - créer des sous-titres SRT et VTT ;
 - résumer une vidéo avec l’IA ;
