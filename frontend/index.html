@@ -114,8 +114,8 @@
   .platform-icon.youtube{color:#E62117;} .platform-icon.tiktok{color:#111;} .platform-icon.instagram{color:#C13584;} .platform-icon.facebook{color:#1877F2;} .platform-icon.x-platform{color:#111;}
   .contact-head{text-align:center;}
   .contact-head p{max-width:600px; margin:8px auto 0;}
-  /* Header actions shifted slightly left as requested */
-  header.top > .auth-area{transform:translateX(-28px);}
+  /* Header actions aligned to the right edge of the header */
+  header.top > .auth-area{grid-column:3; justify-self:end; transform:none;}
   /* Keep platform choices clearly visible directly above VIDEO LINK */
   .platform-picker{justify-content:flex-start; margin-bottom:14px;}
   .field-label{display:block;}
@@ -243,9 +243,9 @@
   .transcript-text::-webkit-scrollbar-thumb{background:var(--border); border-radius:3px;}
 
   .pricing{margin-top:48px;}
-  .pricing-head{margin-bottom:28px;}
+  .pricing-head{margin-bottom:28px; text-align:center;}
   .pricing-head h2{font-size:24px; font-weight:600; letter-spacing:-0.02em;}
-  .pricing-head p{color:var(--text-dim); font-size:14.5px; margin-top:8px;}
+  .pricing-head p{color:var(--text-dim); font-size:14.5px; margin:8px auto 0; max-width:640px;}
   .plans{display:flex; flex-direction:column; gap:12px;}
   .plan{
     border:1px solid var(--border); border-radius:var(--radius); padding:22px;
@@ -343,7 +343,7 @@
     .shell{padding:0 16px 100px;}
     header.top{padding:20px 16px 18px; grid-template-columns:1fr auto;}
     .logo{font-size:14px; gap:8px;}
-    .auth-area{gap:8px; transform:translateX(-8px) !important;}
+    header.top > .auth-area{grid-column:2; justify-self:end; gap:8px; transform:none;}
     .auth-area a.btn-ghost{display:none;}
     .pill{max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
     .btn-signin{padding:8px 12px; font-size:13px;}
@@ -363,6 +363,28 @@
     .plan-price b{font-size:22px;}
   }
   @media (max-width:700px){.seo-grid{grid-template-columns:1fr !important;}}
+
+  /* Floating "back to top" button */
+  .back-to-top{
+    position:fixed; right:20px; bottom:20px;
+    right:calc(20px + env(safe-area-inset-right, 0px));
+    bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+    width:46px; height:46px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--signal); color:#FFFFFF; border:none;
+    box-shadow:0 4px 14px rgba(0,0,0,0.22);
+    cursor:pointer; z-index:9000;
+    opacity:0; visibility:hidden; transform:translateY(12px);
+    transition:opacity .2s ease, transform .2s ease, visibility .2s ease;
+  }
+  .back-to-top.show{opacity:1; visibility:visible; transform:translateY(0);}
+  .back-to-top:hover{filter:brightness(1.1);}
+  .back-to-top:focus-visible{outline:3px solid #FFFFFF; outline-offset:2px; box-shadow:0 0 0 5px var(--signal);}
+  .back-to-top svg{width:22px; height:22px;}
+  @media (max-width:600px){
+    .back-to-top{width:44px; height:44px; right:calc(14px + env(safe-area-inset-right, 0px)); bottom:calc(14px + env(safe-area-inset-bottom, 0px));}
+  }
+  @media (prefers-reduced-motion:reduce){.back-to-top{transition:none;}}
 </style>
 </head>
 <body>
@@ -397,7 +419,7 @@
     </div>
     <label class="field-label">VIDEO LINK</label>
     <div class="url-row">
-      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public video link..." autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
+      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
     </div>
 
     <label class="field-label">LANGUAGE</label>
@@ -588,6 +610,10 @@
   <span>Tangier, Morocco</span>
 </footer>
 
+<button type="button" class="back-to-top" id="backToTop" aria-label="Back to top" title="Back to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
 <div class="modal-overlay" id="authOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeAuthModal()">&times;</button>
@@ -595,12 +621,14 @@
     <p class="sub" id="authSub">Welcome back.</p>
     <div class="modal-error" id="authError"></div>
     <div class="modal-success" id="authSuccess"></div>
+    <form id="authForm" onsubmit="event.preventDefault();handleAuthSubmit();">
     <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('authPassword').focus();}">
     <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAuthSubmit();}">
-    <button class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">
+    <button type="button" class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">
       <span class="spinner"></span>
       <span class="btn-label">Sign in</span>
     </button>
+    </form>
     <div class="modal-toggle" id="authToggle">
       No account? <a onclick="switchAuthMode()">Sign up</a>
     </div>
@@ -686,10 +714,15 @@ async function handleSignOut() {
   resetPageState();
 }
 
-function resetPageState() {
+function clearVideoLink() {
   const urlField = document.getElementById('urlInput');
+  if (!urlField) return;
   urlField.value = '';
   urlField.setAttribute('readonly', 'readonly'); // re-arm the autofill guard
+}
+
+function resetPageState() {
+  clearVideoLink();
   document.getElementById('langSelect').value = 'auto';
   document.getElementById('statusLine').classList.remove('show', 'error');
   document.getElementById('statusLine').textContent = '';
@@ -776,6 +809,7 @@ async function handleAuthSubmit() {
     if (authMode === 'signin') {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      clearVideoLink(); // successful sign-in only: on error we jump to catch and keep the link
       closeAuthModal();
     } else {
       const { data, error } = await sb.auth.signUp({ email, password });
@@ -791,6 +825,7 @@ async function handleAuthSubmit() {
       }
 
       if (data.session) {
+        clearVideoLink();
         closeAuthModal();
       } else {
         successEl.textContent = "Check your email to confirm your account, then sign in.";
@@ -1100,6 +1135,26 @@ function resetInactivityTimer() {
 initSession();
 renderPayPalButtons();
 resetInactivityTimer();
+
+// ---------- Floating "back to top" button ----------
+(function () {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  const SHOW_AFTER_PX = 400;
+  let ticking = false;
+  function update() {
+    btn.classList.toggle('show', (window.pageYOffset || document.documentElement.scrollTop) > SHOW_AFTER_PX);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+  btn.addEventListener('click', function () {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  });
+  update();
+})();
 </script>
 </body>
 </html>
