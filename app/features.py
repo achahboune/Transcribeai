@@ -14,7 +14,8 @@ from typing import Any
 from .config import PLAN_LIMITS_MINUTES
 
 
-PLAN_RANK = {"free": 0, "creator": 1, "pro": 2}
+# "creator" and "pro" are legacy plans: they now have the same access as "unlimited".
+PLAN_RANK = {"free": 0, "unlimited": 1, "creator": 1, "pro": 1}
 
 
 def has_plan(plan: str, minimum: str) -> bool:
@@ -110,15 +111,68 @@ def transcript_to_docx(transcript: str, summary: str | None = None, title: str =
     return output.getvalue()
 
 
+def transcript_to_pdf(transcript: str, summary: str | None = None, title: str = "TranscribeAI transcript") -> bytes:
+    """Build a simple PDF. Uses DejaVu Sans (Unicode) with text shaping so that
+    accents and Arabic render correctly; falls back to a core font if the
+    font file is not available."""
+    from fpdf import FPDF
+
+    font_path = next(
+        (p for p in (
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        ) if __import__("os").path.exists(p)),
+        None,
+    )
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    unicode_ok = False
+    if font_path:
+        try:
+            pdf.add_font("DejaVu", "", font_path)
+            pdf.set_font("DejaVu", size=11)
+            try:
+                pdf.set_text_shaping(True)
+            except Exception:
+                pass
+            unicode_ok = True
+        except Exception:
+            unicode_ok = False
+    if not unicode_ok:
+        pdf.set_font("Helvetica", size=11)
+
+    def safe(text: str) -> str:
+        return text if unicode_ok else text.encode("latin-1", "replace").decode("latin-1")
+
+    def write(text: str, size: int = 11, gap: float = 6):
+        pdf.set_font_size(size)
+        for line in (text.splitlines() or [text]):
+            rtl = any("\u0590" <= ch <= "\u08ff" for ch in line)
+            pdf.multi_cell(0, gap, safe(line) or " ", align="R" if rtl else "L",
+                           new_x="LMARGIN", new_y="NEXT")
+
+    write(title, size=16, gap=9)
+    pdf.ln(3)
+    if summary:
+        write("Summary", size=13, gap=8)
+        write(summary)
+        pdf.ln(3)
+    write("Transcript", size=13, gap=8)
+    write(transcript)
+    return bytes(pdf.output())
+
+
 def plan_capabilities(plan: str) -> dict[str, bool]:
     return {
         "summary": has_plan(plan, "creator"),
         "docx_export": has_plan(plan, "creator"),
+        "pdf_export": has_plan(plan, "creator"),
         "srt_export": has_plan(plan, "creator"),
         "vtt_export": has_plan(plan, "creator"),
         "custom_dictionary": has_plan(plan, "creator"),
         "estimated_speaker_turns": has_plan(plan, "creator"),
-        "advanced_subtitles": has_plan(plan, "pro"),
-        "team": has_plan(plan, "pro"),
-        "api_access": has_plan(plan, "pro"),
+        "advanced_subtitles": has_plan(plan, "creator"),
+        "team": has_plan(plan, "creator"),
+        "api_access": has_plan(plan, "creator"),
     }

@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     paypal_client_id: str = ""
     paypal_client_secret: str = ""
     paypal_plan_creator: str = ""  # P-XXXXXXXXXXXXXXXXXXXX
-    paypal_plan_pro: str = ""      # P-XXXXXXXXXXXXXXXXXXXX
+    paypal_plan_pro: str = ""      # P-XXXXXXXXXXXXXXXXXXXX (legacy plan, kept for existing subscribers)
+    paypal_plan_unlimited_monthly: str = ""  # P-XXXXXXXXXXXXXXXXXXXX (7 USD / month)
+    paypal_plan_unlimited_yearly: str = ""   # P-XXXXXXXXXXXXXXXXXXXX (59.88 USD / year)
     frontend_url: str = "https://transcribeai.site"
 
     max_job_seconds: int = 900  # 15 min hard cap per video for the MVP
@@ -35,8 +37,19 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+# Minutes of audio per billing period. "unlimited" is a fair-use cap (80 h).
+# "creator" / "pro" are legacy plans: existing subscribers get Unlimited access.
 PLAN_LIMITS_MINUTES = {
-    "free": 30,
-    "creator": 600,
-    "pro": 1800,
+    "free": 300,
+    "unlimited": 4800,
+    "creator": 4800,
+    "pro": 4800,
+}
+
+# Maximum length of a single video, per plan (seconds).
+PLAN_MAX_JOB_SECONDS = {
+    "free": 1800,       # 30 min
+    "unlimited": 3600,  # 60 min
+    "creator": 3600,
+    "pro": 3600,
 }

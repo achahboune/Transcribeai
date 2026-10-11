@@ -27,10 +27,14 @@ PAYPAL_API_BASE = "https://api-m.sandbox.paypal.com" if settings.paypal_env == "
 
 
 def _plan_id_to_name():
-    return {
+    mapping = {
+        settings.paypal_plan_unlimited_monthly: "unlimited",
+        settings.paypal_plan_unlimited_yearly: "unlimited",
+        # Legacy plans: existing subscribers keep their access.
         settings.paypal_plan_creator: "creator",
         settings.paypal_plan_pro: "pro",
     }
+    return {plan_id: name for plan_id, name in mapping.items() if plan_id}
 
 
 def _paypal_configured() -> bool:
@@ -39,7 +43,7 @@ def _paypal_configured() -> bool:
 
 class ConfirmSubscriptionRequest(BaseModel):
     subscription_id: str
-    plan: str  # "creator" or "pro" — what the frontend claims; we verify against PayPal
+    plan: str  # "unlimited" (or legacy "creator"/"pro") — what the frontend claims; we verify against PayPal
 
 
 async def _get_paypal_access_token() -> str:
@@ -92,7 +96,7 @@ async def confirm_subscription(payload: ConfirmSubscriptionRequest, user=Depends
     if not _paypal_configured():
         raise HTTPException(status_code=501, detail="Payments are not configured yet.")
 
-    if payload.plan not in ("creator", "pro"):
+    if payload.plan not in ("unlimited", "creator", "pro"):
         raise HTTPException(status_code=400, detail="Invalid plan.")
 
     # Verify the subscription directly with PayPal — never trust the frontend alone.

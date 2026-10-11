@@ -30,10 +30,10 @@
   "description": "AI video transcription tool with summaries and subtitle exports.",
   "offers": [
     {"@type":"Offer","name":"Free","price":"0","priceCurrency":"USD"},
-    {"@type":"Offer","name":"Creator","price":"9","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1M"}},
-    {"@type":"Offer","name":"Pro","price":"19","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1M"}}
+    {"@type":"Offer","name":"Unlimited (monthly)","price":"7","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Unlimited (yearly)","price":"59.88","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","billingDuration":"P1Y"}}
   ],
-  "featureList": ["Video transcription", "AI summaries", "TXT export", "DOCX export", "SRT export", "VTT export"]
+  "featureList": ["Video transcription", "AI summaries", "TXT export", "DOCX export", "PDF export", "SRT export", "VTT export"]
 }
 </script>
 <script type="application/ld+json">
@@ -42,7 +42,7 @@
   "@type":"FAQPage",
   "mainEntity":[
     {"@type":"Question","name":"What videos can I transcribe?","acceptedAnswer":{"@type":"Answer","text":"Public links from supported major video platforms can be transcribed, subject to availability and access rules."}},
-    {"@type":"Question","name":"Can I export subtitles?","acceptedAnswer":{"@type":"Answer","text":"Creator and Pro users can export SRT and VTT subtitle files. TXT export is available on the Free plan."}},
+    {"@type":"Question","name":"Can I export subtitles?","acceptedAnswer":{"@type":"Answer","text":"Unlimited users can export subtitles (SRT, VTT) and Word, PDF and TXT files. TXT export is available on the Free plan."}},
     {"@type":"Question","name":"Do I need a credit card to start?","acceptedAnswer":{"@type":"Answer","text":"No. The Free plan can be started without a credit card."}}
   ]
 }
@@ -253,7 +253,7 @@
     background:var(--bg-raised);
   }
   @media (min-width:900px){
-    .plans{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; align-items:stretch;}
+    .plans{display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; align-items:stretch; max-width:760px; margin:0 auto;}
     .plan{flex-direction:column; align-items:stretch; gap:16px;}
     .plan-cta{width:100%; text-align:center;}
   }
@@ -279,6 +279,14 @@
   }
   .plan.featured .plan-cta{background:var(--signal); color:#FFFFFF; border-color:var(--signal); font-weight:600;}
   .plan-cta:hover{filter:brightness(1.05);}
+  .billing-toggle{display:inline-flex; border:1px solid var(--border); border-radius:100px; padding:3px; margin:0 0 12px; background:var(--bg-inset);}
+  .billing-toggle button{background:none; border:none; color:var(--text-dim); font-size:12.5px; padding:5px 12px; border-radius:100px; cursor:pointer;}
+  .billing-toggle button.active{background:var(--signal); color:#FFFFFF; font-weight:600;}
+  .plan-note{font-size:12px; color:var(--text-faint); margin-top:6px;}
+  .fmt-row{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .fmt-ico{display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:18px; padding:0 4px; border-radius:4px; font-size:9.5px; font-weight:700; color:#FFFFFF; font-family:var(--mono); letter-spacing:0.02em;}
+  .fmt-docx{background:#2B579A;} .fmt-pdf{background:#D93025;} .fmt-srt,.fmt-vtt{background:#5F6368;} .fmt-txt{background:#188038;}
+  .fmt-chip{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--text-dim);}
   .paypal-btn-wrap{margin-top:14px; min-height:35px; position:relative; z-index:1;}
   .paypal-btn-wrap.disabled{opacity:0.4; pointer-events:none;}
 
@@ -452,7 +460,7 @@
     <div class="usage-bar-wrap" id="usageWrap">
       <div class="usage-label">
         <span>Usage this month</span>
-        <span id="usageText">0 / 30 min</span>
+        <span id="usageText">0 / 300 min</span>
       </div>
       <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
     </div>
@@ -469,10 +477,11 @@
     <div class="transcript-text" id="transcriptText"></div>
     <div id="featureActions" style="display:none; gap:8px; flex-wrap:wrap; margin-top:16px">
       <button class="copy-btn" onclick="handleSummary()"><span>AI summary</span></button>
-      <button class="copy-btn" onclick="handleExport('txt')"><span>TXT</span></button>
-      <button class="copy-btn" onclick="handleExport('docx')"><span>DOCX</span></button>
-      <button class="copy-btn" onclick="handleExport('srt')"><span>SRT</span></button>
-      <button class="copy-btn" onclick="handleExport('vtt')"><span>VTT</span></button>
+      <button class="copy-btn" onclick="handleExport('txt')"><span class="fmt-ico fmt-txt">TXT</span><span>TXT</span></button>
+      <button class="copy-btn" onclick="handleExport('docx')"><span class="fmt-ico fmt-docx">W</span><span>Word</span></button>
+      <button class="copy-btn" onclick="handleExport('pdf')"><span class="fmt-ico fmt-pdf">PDF</span><span>PDF</span></button>
+      <button class="copy-btn" onclick="handleExport('srt')"><span class="fmt-ico fmt-srt">SRT</span><span>SRT</span></button>
+      <button class="copy-btn" onclick="handleExport('vtt')"><span class="fmt-ico fmt-vtt">VTT</span><span>VTT</span></button>
     </div>
     <div id="summaryCard" style="display:none; margin-top:16px; padding:14px; border-top:1px solid var(--line)">
       <div class="result-title">AI SUMMARY</div>
@@ -485,7 +494,7 @@
     <p>TranscribeAI turns public video links into readable text so you can search, edit, summarize, and reuse spoken content. Choose a language or let the service detect it automatically, then work from the generated transcript.</p>
     <div class="seo-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;">
       <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">From popular video links</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Paste a public link from supported video platforms and start a transcription from one place.</p></div>
-      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Transcript to useful files</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Keep the transcript as text or use Creator and Pro exports for DOCX, SRT and VTT workflows.</p></div>
+      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Transcript to useful files</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Keep the transcript as text or use Unlimited exports for Word, PDF, SRT and VTT workflows.</p></div>
       <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Multilingual transcription</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">English, French, Arabic and other supported languages are available from the language selector.</p></div>
       <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Built for real workflows</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Use transcripts for research, interviews, content repurposing, subtitles, notes and searchable archives.</p></div>
     </div>
@@ -512,44 +521,42 @@
           <h3>Free</h3>
           <div class="plan-price"><b>$0</b> / month</div>
           <ul class="plan-features">
-            <li>30 min / month</li>
+            <li>300 min / month</li>
+            <li>Up to 30 min per file</li>
             <li>Audio + video</li>
             <li>TXT export</li>
             <li>No credit card required</li>
-            <li>Start in under 2 minutes</li>
           </ul>
+          <div class="fmt-row"><span class="fmt-chip"><span class="fmt-ico fmt-txt">TXT</span></span></div>
         </div>
         <button class="plan-cta" id="freePlanBtn" onclick="handleFreePlanClick()">Current plan</button>
       </div>
 
       <div class="plan featured">
         <div class="plan-info">
-          <h3>Creator</h3>
-          <div class="plan-price"><b>$9</b> / month</div>
+          <h3>Unlimited</h3>
+          <div class="billing-toggle" role="group" aria-label="Billing period">
+            <button type="button" id="billMonthly" class="active" onclick="setBilling('monthly')">Monthly</button>
+            <button type="button" id="billYearly" onclick="setBilling('yearly')">Yearly</button>
+          </div>
+          <div class="plan-price"><b id="unlimitedPrice">$7</b> <span id="unlimitedPer">/ month</span></div>
+          <div class="plan-note" id="unlimitedNote">Billed monthly. Cancel anytime.</div>
           <ul class="plan-features">
-            <li>10 h / month</li>
-            <li>Audio + video</li>
-            <li>50+ languages</li>
+            <li>Unlimited transcription (fair use: 80 h / month)</li>
+            <li>Files up to 60 min</li>
+            <li>Audio + video, 50+ languages</li>
+            <li>Subtitles (SRT, VTT)</li>
             <li>AI summary</li>
-            <li>TXT / DOCX / SRT export</li>
-            <li>Timestamped speaker turns</li>
+            <li>API access (beta)</li>
           </ul>
-          <div class="paypal-btn-wrap" id="paypal-btn-creator"></div>
-        </div>
-      </div>
-
-      <div class="plan">
-        <div class="plan-info">
-          <h3>Pro / Team</h3>
-          <div class="plan-price"><b>$19</b> / month</div>
-          <ul class="plan-features">
-            <li>30 h / month</li>
-            <li>Everything in Creator</li>
-            <li>Advanced subtitles</li>
-            <li>Advanced SRT / VTT subtitles</li>
-            <li>API access</li>
-          </ul>
-          <div class="paypal-btn-wrap" id="paypal-btn-pro"></div>
+          <div class="fmt-row">
+            <span class="fmt-chip"><span class="fmt-ico fmt-docx">W</span>Word</span>
+            <span class="fmt-chip"><span class="fmt-ico fmt-pdf">PDF</span>PDF</span>
+            <span class="fmt-chip"><span class="fmt-ico fmt-srt">SRT</span>SRT</span>
+            <span class="fmt-chip"><span class="fmt-ico fmt-vtt">VTT</span>VTT</span>
+            <span class="fmt-chip"><span class="fmt-ico fmt-txt">TXT</span>TXT</span>
+          </div>
+          <div class="paypal-btn-wrap" id="paypal-btn-unlimited"></div>
         </div>
       </div>
     </div>
@@ -593,7 +600,7 @@
     </details>
     <details style="padding:10px 0;border-bottom:1px solid var(--border);">
       <summary><strong>Can I export subtitles?</strong></summary>
-      <p style="color:var(--text-dim);margin-top:8px;">Creator and Pro users can export SRT and VTT subtitle files. TXT export is available on the Free plan.</p>
+      <p style="color:var(--text-dim);margin-top:8px;">Unlimited users can export subtitles (SRT, VTT) and Word, PDF and TXT files. TXT export is available on the Free plan.</p>
     </details>
     <details style="padding:10px 0;">
       <summary><strong>Do I need a credit card to start?</strong></summary>
@@ -753,13 +760,13 @@ function closeAuthModal() {
   showPayPalButtons();
 }
 function hidePayPalButtons() {
-  ['paypal-btn-creator', 'paypal-btn-pro'].forEach(id => {
+  ['paypal-btn-unlimited'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.visibility = 'hidden';
   });
 }
 function showPayPalButtons() {
-  ['paypal-btn-creator', 'paypal-btn-pro'].forEach(id => {
+  ['paypal-btn-unlimited'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.visibility = 'visible';
   });
@@ -770,7 +777,7 @@ function switchAuthMode() {
 }
 function applyAuthModeUI() {
   document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
-  document.getElementById('authSub').textContent = authMode === 'signin' ? 'Welcome back.' : 'Start with 30 free minutes a month.';
+  document.getElementById('authSub').textContent = authMode === 'signin' ? 'Welcome back.' : 'Start with 300 free minutes a month.';
   document.getElementById('authSubmitBtn').querySelector('.btn-label').textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
   document.getElementById('authToggle').innerHTML = authMode === 'signin'
     ? `No account? <a onclick="switchAuthMode()">Sign up</a>`
@@ -863,12 +870,12 @@ async function loadProfile() {
     });
     if (!res.ok) return;
     const profile = await res.json();
-    const limit = profile.minutes_limit || 30;
+    const limit = profile.minutes_limit || 300;
     const used = profile.minutes_used_this_period || 0;
     const pct = Math.min(100, (used / limit) * 100);
 
     document.getElementById('usageWrap').classList.add('show');
-    document.getElementById('usageText').textContent = `${used.toFixed(1)} / ${limit} min · ${profile.plan}`;
+    document.getElementById('usageText').textContent = `${used.toFixed(1)} / ${limit} min · ${profile.plan === 'free' ? 'Free' : 'Unlimited'}`;
     document.getElementById('usageFill').style.width = `${pct}%`;
 
     const freeBtn = document.getElementById('freePlanBtn');
@@ -989,11 +996,25 @@ async function handleUpgradeClick(plan) {
 }
 
 // ---------- PayPal Subscriptions ----------
-const PAYPAL_CLIENT_ID = "BAADiKsFGaX64oemgWeXBvYfiBxvVjD43e_Az_Sz720dMqOf_Jrh-hlJpb_deSSdVKYybyEYztN0T5JI-g";
+const PAYPAL_CLIENT_ID = "BAAoWkwL88KivHMtgfq8z9-O5-bi7zW3Xr1K30IezJTOjxQlpW4pBCVh40j8MjnubQBguOaQ5p5pd_wF1E";
+// PayPal subscription plans for Unlimited (monthly 7 USD / yearly 59.88 USD).
 const PAYPAL_PLAN_IDS = {
-  creator: "P-65J00218TV741221ANK2BUBA",
-  pro: "P-0WT093369V964314UNK2PJYI"
+  monthly: "P-41A755654H652392GNLFYYNQ",
+  yearly: "P-54X285051D656383SNLFZBKI"
 };
+let currentBilling = 'monthly';
+
+function setBilling(period) {
+  currentBilling = period === 'yearly' ? 'yearly' : 'monthly';
+  document.getElementById('billMonthly').classList.toggle('active', currentBilling === 'monthly');
+  document.getElementById('billYearly').classList.toggle('active', currentBilling === 'yearly');
+  document.getElementById('unlimitedPrice').textContent = currentBilling === 'yearly' ? '$4.99' : '$7';
+  document.getElementById('unlimitedPer').textContent = '/ month';
+  document.getElementById('unlimitedNote').textContent = currentBilling === 'yearly'
+    ? 'Billed $59.88 once a year. Cancel anytime.'
+    : 'Billed monthly. Cancel anytime.';
+  renderPayPalButtons();
+}
 
 function loadPayPalSdk() {
   return new Promise((resolve, reject) => {
@@ -1007,48 +1028,51 @@ function loadPayPalSdk() {
 }
 
 async function renderPayPalButtons() {
+  const container = document.getElementById('paypal-btn-unlimited');
+  if (!container) return;
+  const planId = PAYPAL_PLAN_IDS[currentBilling];
+  if (!planId || planId.includes('REPLACE')) {
+    container.innerHTML = '<div class="plan-note">Subscriptions open soon.</div>';
+    return;
+  }
   try {
     const paypal = await loadPayPalSdk();
-    ['creator', 'pro'].forEach(plan => {
-      const container = document.getElementById(`paypal-btn-${plan}`);
-      if (!container) return;
-      container.innerHTML = '';
-      paypal.Buttons({
-        style: { shape: 'rect', color: plan === 'creator' ? 'gold' : 'black', layout: 'horizontal', label: 'subscribe', height: 40 },
-        createSubscription: function (data, actions) {
-          if (!currentSession) {
-            openAuthModal('signup');
-            return Promise.reject(new Error('Not signed in'));
-          }
-          return actions.subscription.create({ plan_id: PAYPAL_PLAN_IDS[plan] });
-        },
-        onApprove: async function (data) {
-          try {
-            const res = await fetch(`${API_BASE}/api/billing/confirm-subscription`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${currentSession.access_token}`
-              },
-              body: JSON.stringify({ subscription_id: data.subscriptionID, plan })
-            });
-            const result = await res.json().catch(() => ({}));
-            if (res.ok) {
-              alert(`Subscribed to ${plan === 'creator' ? 'Creator' : 'Pro'}! Your plan is now active.`);
-              loadProfile();
-            } else {
-              const detail = result.detail || `Server returned ${res.status}`;
-              alert(`Payment approved, but activating your plan failed:\n${detail}\n\nSubscription ID: ${data.subscriptionID}`);
-            }
-          } catch (e) {
-            alert(`Payment approved, but activating your plan failed:\n${e.message}\n\nSubscription ID: ${data.subscriptionID}`);
-          }
-        },
-        onError: function () {
-          alert('Something went wrong with PayPal. Please try again.');
+    container.innerHTML = '';
+    paypal.Buttons({
+      style: { shape: 'rect', color: 'gold', layout: 'horizontal', label: 'subscribe', height: 40 },
+      createSubscription: function (data, actions) {
+        if (!currentSession) {
+          openAuthModal('signup');
+          return Promise.reject(new Error('Not signed in'));
         }
-      }).render(`#paypal-btn-${plan}`);
-    });
+        return actions.subscription.create({ plan_id: planId });
+      },
+      onApprove: async function (data) {
+        try {
+          const res = await fetch(`${API_BASE}/api/billing/confirm-subscription`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${currentSession.access_token}`
+            },
+            body: JSON.stringify({ subscription_id: data.subscriptionID, plan: 'unlimited' })
+          });
+          const result = await res.json().catch(() => ({}));
+          if (res.ok) {
+            alert('Subscribed to Unlimited! Your plan is now active.');
+            loadProfile();
+          } else {
+            const detail = result.detail || `Server returned ${res.status}`;
+            alert(`Payment approved, but activating your plan failed:\n${detail}\n\nSubscription ID: ${data.subscriptionID}`);
+          }
+        } catch (e) {
+          alert(`Payment approved, but activating your plan failed:\n${e.message}\n\nSubscription ID: ${data.subscriptionID}`);
+        }
+      },
+      onError: function () {
+        alert('Something went wrong with PayPal. Please try again.');
+      }
+    }).render('#paypal-btn-unlimited');
   } catch (e) {
     console.warn('PayPal buttons could not be loaded.');
   }

@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field, HttpUrl
 
-from .config import settings, PLAN_LIMITS_MINUTES
+from .config import settings, PLAN_LIMITS_MINUTES, PLAN_MAX_JOB_SECONDS
 from .downloader import (
     download_audio,
     detect_platform,
@@ -38,6 +38,7 @@ from .features import (
     normalize_segments,
     plan_capabilities,
     transcript_to_docx,
+    transcript_to_pdf,
     transcript_to_srt,
     transcript_to_vtt,
 )
@@ -329,7 +330,7 @@ async def transcribe(
             status_code=402,
             detail=(
                 f"You've used your {minutes_limit} min/month "
-                f"on the {plan} plan. Upgrade to continue."
+                f"on the {plan} plan. Upgrade to Unlimited to continue."
             ),
         )
 
@@ -349,7 +350,7 @@ async def transcribe(
             status_code=402,
             detail=(
                 "Custom dictionary is available on "
-                "Creator and Pro plans."
+                "the Unlimited plan."
             ),
         )
 
@@ -369,7 +370,7 @@ async def transcribe(
 
     remaining_minutes = minutes_limit - minutes_used
     max_seconds = min(
-        settings.max_job_seconds,
+        PLAN_MAX_JOB_SECONDS.get(plan, settings.max_job_seconds),
         int(remaining_minutes * 60),
     )
 
@@ -448,7 +449,7 @@ async def summary(
             status_code=402,
             detail=(
                 "AI summaries are available on "
-                "Creator and Pro plans."
+                "the Unlimited plan."
             ),
         )
 
@@ -482,6 +483,7 @@ async def export_transcript(
     allowed = {
         "txt",
         "docx",
+        "pdf",
         "srt",
         "vtt",
     }
@@ -489,7 +491,7 @@ async def export_transcript(
     if file_format not in allowed:
         raise HTTPException(
             status_code=400,
-            detail="Supported formats are TXT, DOCX, SRT, and VTT.",
+            detail="Supported formats are TXT, DOCX, PDF, SRT, and VTT.",
         )
 
     if file_format != "txt" and not has_plan(plan, "creator"):
@@ -497,7 +499,7 @@ async def export_transcript(
             status_code=402,
             detail=(
                 "This export format is available on "
-                "Creator and Pro plans."
+                "the Unlimited plan."
             ),
         )
 
@@ -525,6 +527,10 @@ async def export_transcript(
             diarized,
         ).encode("utf-8")
         media_type = "text/vtt; charset=utf-8"
+
+    elif file_format == "pdf":
+        body = transcript_to_pdf(payload.transcript)
+        media_type = "application/pdf"
 
     else:
         body = transcript_to_docx(payload.transcript)

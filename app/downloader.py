@@ -52,19 +52,19 @@ def download_audio(url: str, max_duration_seconds: int = 900) -> dict:
     except json.JSONDecodeError:
         pass
 
-    # Download audio as MP3 (much smaller than WAV — keeps files comfortably
-    # under Groq's 25MB free-tier limit even for a full 15-30 min video).
-    # 16kHz mono at 64kbps is plenty for speech recognition accuracy.
+    # Download audio as MP3 (much smaller than WAV — keeps files under
+    # Groq's 25MB limit: 60 min at 48kbps is about 21.6MB).
+    # 16kHz mono at 48kbps is plenty for speech recognition accuracy.
     dl_cmd = [
         "yt-dlp", "--no-warnings",
         "-f", "bestaudio/best",
-        "--extract-audio", "--audio-format", "mp3", "--audio-quality", "64K",
+        "--extract-audio", "--audio-format", "mp3", "--audio-quality", "48K",
         "--postprocessor-args", "ffmpeg:-ar 16000 -ac 1",
         "-o", output_template,
         url,
     ]
     try:
-        result = subprocess.run(dl_cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(dl_cmd, capture_output=True, text=True, timeout=600)
     except subprocess.TimeoutExpired:
         raise DownloadError("Download timed out. Try a shorter video or check the link.")
 
