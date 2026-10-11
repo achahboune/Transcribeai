@@ -8,15 +8,18 @@ TranscribeAI — Render orchestrator.
 """
 
 import asyncio
+import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse, Response
 from pydantic import BaseModel, Field, HttpUrl
 
 from .config import settings, PLAN_LIMITS_MINUTES, PLAN_MAX_JOB_SECONDS
 from .downloader import (
+    TMP_DIR,
+    convert_media_file,
     download_audio,
     detect_platform,
     cleanup_job_dir,
@@ -65,6 +68,18 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 # Max simultaneous downloads/conversions (the Oracle VM has 1 CPU core).
 DOWNLOAD_SEMAPHORE = asyncio.Semaphore(2)
+
+# File upload limits (bytes) per plan, and accepted extensions.
+UPLOAD_MAX_BYTES = {
+    "free": 200 * 1024 * 1024,        # 200 MB
+    "unlimited": 1024 * 1024 * 1024,  # 1 GB
+    "creator": 1024 * 1024 * 1024,
+    "pro": 1024 * 1024 * 1024,
+}
+ALLOWED_UPLOAD_EXT = {
+    ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wma",
+    ".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v", ".3gp", ".mpeg", ".mpg",
+}
 
 SEO_PAGES = [
     "tiktok-transcription",
@@ -433,6 +448,114 @@ async def transcribe(
     finally:
         if job_dir:
             cleanup_job_dir(job_dir)
+
+
+@app.post("/api/v1/transcribe-file")
+async def transcribe_file(
+    request: Request,
+    language: str = "auto",
+    filename: str = "",
+    user=Depends(get_current_user),
+):
+    """Transcribe an uploaded audio/video file. The file is sent as the raw
+    request body (application/octet-stream) so we can enforce size limits
+    while streaming it to disk."""
+    profile = await get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    minutes_used = profile.get("minutes_used_this_period", 0)
+    minutes_limit = PLAN_LIMITS_MINUTES.get(plan, 30)
+
+    if minutes_used >= minutes_limit:
+        raise HTTPException(
+            status_code=402,
+            detail=(
+                f"You've used your {minutes_limit} min/month "
+                f"on the {plan} plan. Upgrade to Unlimited to continue."
+            ),
+        )
+    if not groq_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="Transcription is temporarily unavailable. Please try again shortly.",
+        )
+
+    ext = Path(filename or "").suffix.lower()
+    if ext not in ALLOWED_UPLOAD_EXT:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Upload MP3, WAV, M4A, MP4, MOV, MKV, WEBM or a similar audio/video file.",
+        )
+
+    max_bytes = UPLOAD_MAX_BYTES.get(plan, UPLOAD_MAX_BYTES["free"])
+    max_mb = max_bytes // (1024 * 1024)
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. The {plan} plan accepts uploads up to {max_mb} MB.",
+        )
+
+    remaining_minutes = minutes_limit - minutes_used
+    max_seconds = min(
+        PLAN_MAX_JOB_SECONDS.get(plan, settings.max_job_seconds),
+        int(remaining_minutes * 60),
+    )
+
+    job_dir = TMP_DIR / str(uuid.uuid4())
+    job_dir.mkdir(parents=True, exist_ok=True)
+    src_path = job_dir / f"upload{ext}"
+
+    try:
+        # Stream the body to disk, enforcing the size limit as we go.
+        total = 0
+        buffer = bytearray()
+        with open(src_path, "wb") as out:
+            async for chunk in request.stream():
+                total += len(chunk)
+                if total > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large. The {plan} plan accepts uploads up to {max_mb} MB.",
+                    )
+                buffer.extend(chunk)
+                if len(buffer) >= 1024 * 1024:
+                    await asyncio.to_thread(out.write, bytes(buffer))
+                    buffer.clear()
+            if buffer:
+                await asyncio.to_thread(out.write, bytes(buffer))
+        if total == 0:
+            raise HTTPException(status_code=400, detail="The uploaded file is empty.")
+
+        async with DOWNLOAD_SEMAPHORE:
+            converted = await asyncio.to_thread(
+                convert_media_file, str(src_path), max_duration_seconds=max_seconds
+            )
+
+        result = await transcribe_audio(
+            converted["wav_path"], language=language, dictionary=None
+        )
+
+        actual_duration = result.get("duration") or converted.get("duration_seconds") or 0
+        new_total = minutes_used + (actual_duration / 60.0)
+        await update_minutes_used(user["id"], new_total)
+
+        return {
+            "transcript": result["text"],
+            "detected_language": result.get("detected_language"),
+            "platform": "upload",
+            "duration_seconds": actual_duration,
+            "segments": result.get("segments", []),
+            "dictionary_terms": [],
+            "minutes_used_this_period": round(new_total, 2),
+            "minutes_limit": minutes_limit,
+        }
+
+    except DownloadError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except TranscriptionError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    finally:
+        cleanup_job_dir(str(job_dir))
 
 
 @app.post("/api/summary")

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Video Transcription Online | TranscribeAI</title>
-<meta name="description" content="Transcribe videos from TikTok, Instagram, Facebook and X with AI. Get clean transcripts, summaries and subtitle exports in minutes.">
+<meta name="description" content="Transcribe videos from TikTok, Instagram, Facebook and X, or upload your own audio and video files. Get clean transcripts, summaries and subtitle exports in minutes.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="author" content="TranscribeAI">
 <link rel="canonical" href="https://transcribeai.site/">
@@ -378,6 +378,21 @@
   }
   @media (max-width:700px){.seo-grid{grid-template-columns:1fr !important;}}
 
+  /* File upload */
+  .or-row{display:flex; align-items:center; gap:10px; margin:12px 0 10px; color:var(--text-faint); font-size:12px; text-transform:uppercase; letter-spacing:0.08em;}
+  .or-row::before,.or-row::after{content:""; flex:1; height:1px; background:var(--border);}
+  .upload-zone{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; text-align:center; min-height:56px; padding:12px 14px; border:1.5px dashed var(--border); border-radius:10px; background:var(--bg-inset); cursor:pointer; font-size:14px; color:var(--text-dim); transition:border-color .15s, background .15s;}
+  .upload-zone:hover,.upload-zone:focus-visible,.upload-zone.dragover{border-color:var(--signal); background:var(--signal-soft); outline:none;}
+  .upload-zone{margin-bottom:14px;}
+  .upload-zone b{color:var(--text);}
+  .upload-zone small{display:block; font-size:12px; color:var(--text-faint); margin-top:2px;}
+  .upload-zone.has-file{border-style:solid; border-color:var(--signal); background:var(--signal-soft); justify-content:space-between;}
+  .upload-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; font-weight:600; color:var(--text);}
+  .upload-clear{flex:none; width:32px; height:32px; border-radius:50%; border:none; background:#FFFFFF; color:var(--text); font-size:18px; line-height:1; cursor:pointer; border:1px solid var(--border);}
+  .progress-track{height:6px; border-radius:6px; background:var(--bg-inset); border:1px solid var(--border); margin-top:10px; overflow:hidden; display:none;}
+  .progress-track.show{display:block;}
+  .progress-fill{height:100%; width:0; background:var(--signal); transition:width .2s;}
+
   /* How it works */
   .how{margin-top:40px; text-align:center;}
   .how h2{font-size:26px; line-height:1.2; margin:0;}
@@ -448,7 +463,7 @@
 
   <section class="hero">
     <h1>AI Video Transcription Online</h1>
-    <p>Turn video into clear words. Transcribe public video links, create AI summaries, and export subtitles in minutes.</p>
+    <p>Turn video into clear words. Paste a link or upload a file, create AI summaries, and export subtitles in minutes.</p>
   </section>
 
       <section class="card">
@@ -462,6 +477,15 @@
     <div class="url-row">
       <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public TikTok video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
     </div>
+
+    <div class="or-row"><span>or</span></div>
+    <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="Upload an audio or video file">
+      <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.wav,.m4a,.aac,.ogg,.opus,.flac,.wma,.mp4,.mov,.mkv,.webm,.avi,.m4v,.3gp" hidden>
+      <div id="uploadPrompt"><b>Upload a file</b><small>MP3, M4A, WAV, MP4, MOV… tap or drag &amp; drop</small></div>
+      <span class="upload-name" id="uploadName" hidden></span>
+      <button type="button" class="upload-clear" id="uploadClear" aria-label="Remove file" hidden>&times;</button>
+    </div>
+    <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
 
     <label class="field-label">LANGUAGE</label>
     <div class="controls-row">
@@ -527,7 +551,7 @@
     <h2 id="how-title">From video link to text in 3 steps</h2>
     <p class="how-sub">No install. No upload. Just paste a link.</p>
     <div class="how-grid">
-      <div class="how-step"><span class="how-num">1</span><h3>Paste a link</h3><p>TikTok, Instagram, Facebook or X. Any public video.</p></div>
+      <div class="how-step"><span class="how-num">1</span><h3>Paste a link or upload</h3><p>TikTok, Instagram, Facebook, X, or your own audio and video files.</p></div>
       <div class="how-step"><span class="how-num">2</span><h3>Get your text</h3><p>Fast AI transcription in 50+ languages.</p></div>
       <div class="how-step"><span class="how-num">3</span><h3>Export anywhere</h3><p>Word, PDF, SRT, VTT, plus an AI summary.</p></div>
     </div>
@@ -550,7 +574,8 @@
           <ul class="plan-features">
             <li>300 min / month</li>
             <li>Up to 30 min per file</li>
-            <li>Audio + video</li>
+            <li>Audio + video, links or file upload</li>
+            <li>Uploads up to 200 MB</li>
             <li>TXT export</li>
             <li>No credit card required</li>
           </ul>
@@ -572,6 +597,7 @@
             <li>Unlimited transcription (fair use: 80 h / month)</li>
             <li>Files up to 60 min</li>
             <li>Audio + video, 50+ languages</li>
+            <li>Link or file upload (up to 1 GB)</li>
             <li>Subtitles (SRT, VTT)</li>
             <li>AI summary</li>
             <li>API access (beta)</li>
@@ -704,6 +730,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 let currentSession = null;
+let selectedFile = null;
 let authMode = "signin";
 let lastResult = null;
 
@@ -763,6 +790,8 @@ function clearVideoLink() {
 
 function resetPageState() {
   clearVideoLink();
+  if (typeof setSelectedFile === 'function') setSelectedFile(null);
+  window.currentPlan = 'free';
   document.getElementById('langSelect').value = 'auto';
   document.getElementById('statusLine').classList.remove('show', 'error');
   document.getElementById('statusLine').textContent = '';
@@ -907,6 +936,7 @@ async function loadProfile() {
     });
     if (!res.ok) return;
     const profile = await res.json();
+    window.currentPlan = profile.plan || 'free';
     const limit = profile.minutes_limit || 300;
     const used = profile.minutes_used_this_period || 0;
     const pct = Math.min(100, (used / limit) * 100);
@@ -922,7 +952,124 @@ async function loadProfile() {
   } catch (e) { /* silent */ }
 }
 
+function showTranscriptResult(data) {
+  document.getElementById('transcriptText').textContent = data.transcript;
+  lastResult = data;
+  document.getElementById('featureActions').style.display = 'flex';
+  document.getElementById('resultMeta').textContent = `TRANSCRIPT · ${String(data.platform || '').toUpperCase()} · ${Math.round(data.duration_seconds || 0)}s`;
+  document.getElementById('resultCard').classList.add('show');
+}
+
+// ---------- File upload ----------
+const UPLOAD_LIMIT_FREE = 200 * 1024 * 1024;
+const UPLOAD_LIMIT_PAID = 1024 * 1024 * 1024;
+
+function formatBytes(n) {
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+
+function setSelectedFile(file) {
+  selectedFile = file || null;
+  const zone = document.getElementById('uploadZone');
+  document.getElementById('uploadPrompt').hidden = !!selectedFile;
+  document.getElementById('uploadName').hidden = !selectedFile;
+  document.getElementById('uploadClear').hidden = !selectedFile;
+  zone.classList.toggle('has-file', !!selectedFile);
+  if (selectedFile) {
+    document.getElementById('uploadName').textContent = `${selectedFile.name} (${formatBytes(selectedFile.size)})`;
+    clearVideoLink(); // a file replaces any pasted link
+  } else {
+    document.getElementById('fileInput').value = '';
+  }
+}
+
+(function initUpload() {
+  const zone = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+  if (!zone || !input) return;
+  zone.addEventListener('click', (e) => {
+    if (e.target.id === 'uploadClear') return;
+    if (!selectedFile) input.click();
+  });
+  zone.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !selectedFile) { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener('change', () => setSelectedFile(input.files && input.files[0]));
+  document.getElementById('uploadClear').addEventListener('click', (e) => { e.stopPropagation(); setSelectedFile(null); });
+  ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove('dragover'); }));
+  zone.addEventListener('drop', (e) => {
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) setSelectedFile(f);
+  });
+  // Typing or pasting a link replaces the selected file.
+  document.getElementById('urlInput').addEventListener('input', () => {
+    if (selectedFile && document.getElementById('urlInput').value.trim()) setSelectedFile(null);
+  });
+})();
+
+function handleUploadTranscribe() {
+  const language = document.getElementById('langSelect').value;
+  const statusLine = document.getElementById('statusLine');
+  const btn = document.getElementById('transcribeBtn');
+  const track = document.getElementById('progressTrack');
+  const fill = document.getElementById('progressFill');
+
+  if (!currentSession) { openAuthModal('signup'); return; }
+
+  const isFree = (window.currentPlan || 'free') === 'free';
+  const limit = isFree ? UPLOAD_LIMIT_FREE : UPLOAD_LIMIT_PAID;
+  if (selectedFile.size > limit) {
+    statusLine.textContent = `File too large. Your plan accepts uploads up to ${Math.round(limit / 1048576)} MB.` + (isFree ? ' Upgrade to Unlimited for files up to 1 GB.' : '');
+    statusLine.classList.add('show', 'error');
+    return;
+  }
+
+  const finish = () => { btn.classList.remove('loading'); btn.disabled = false; track.classList.remove('show'); fill.style.width = '0'; };
+  btn.classList.add('loading'); btn.disabled = true;
+  document.getElementById('resultCard').classList.remove('show');
+  statusLine.textContent = 'Uploading…';
+  statusLine.classList.add('show');
+  track.classList.add('show'); fill.style.width = '0';
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `${API_BASE}/api/v1/transcribe-file?language=${encodeURIComponent(language)}&filename=${encodeURIComponent(selectedFile.name)}`);
+  xhr.setRequestHeader('Authorization', `Bearer ${currentSession.access_token}`);
+  xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+  xhr.upload.onprogress = (e) => {
+    if (!e.lengthComputable) return;
+    const pct = Math.round((e.loaded / e.total) * 100);
+    fill.style.width = pct + '%';
+    statusLine.textContent = `Uploading… ${pct}%`;
+  };
+  xhr.upload.onload = () => {
+    fill.style.width = '100%';
+    statusLine.textContent = 'Transcribing — this can take a minute for longer files…';
+  };
+  xhr.onload = () => {
+    let data = {};
+    try { data = JSON.parse(xhr.responseText); } catch (e) { /* not JSON */ }
+    if (xhr.status >= 200 && xhr.status < 300) {
+      showTranscriptResult(data);
+      statusLine.classList.remove('show');
+      setSelectedFile(null);
+      loadProfile();
+    } else {
+      statusLine.textContent = data.detail || (xhr.status === 413 ? 'File too large for your plan.' : 'Transcription failed.');
+      statusLine.classList.add('show', 'error');
+    }
+    finish();
+  };
+  xhr.onerror = () => {
+    statusLine.textContent = 'Upload failed. Check your connection and try again.';
+    statusLine.classList.add('show', 'error');
+    finish();
+  };
+  xhr.send(selectedFile);
+}
+
 async function handleTranscribe() {
+  if (selectedFile) { document.getElementById('statusLine').classList.remove('show', 'error'); return handleUploadTranscribe(); }
   const url = document.getElementById('urlInput').value.trim();
   const language = document.getElementById('langSelect').value;
   const statusLine = document.getElementById('statusLine');
@@ -931,7 +1078,7 @@ async function handleTranscribe() {
   statusLine.classList.remove('show', 'error');
 
   if (!url) {
-    statusLine.textContent = 'Paste a video link first.';
+    statusLine.textContent = 'Paste a video link or upload a file first.';
     statusLine.classList.add('show', 'error');
     return;
   }
@@ -958,11 +1105,7 @@ async function handleTranscribe() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Transcription failed.');
 
-    document.getElementById('transcriptText').textContent = data.transcript;
-    lastResult = data;
-    document.getElementById('featureActions').style.display = 'flex';
-    document.getElementById('resultMeta').textContent = `TRANSCRIPT · ${data.platform.toUpperCase()} · ${Math.round(data.duration_seconds || 0)}s`;
-    document.getElementById('resultCard').classList.add('show');
+    showTranscriptResult(data);
     statusLine.classList.remove('show');
     loadProfile();
   } catch (err) {

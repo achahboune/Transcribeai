@@ -86,3 +86,53 @@ def download_audio(url: str, max_duration_seconds: int = 900) -> dict:
 
 def cleanup_job_dir(job_dir: str):
     shutil.rmtree(job_dir, ignore_errors=True)
+
+
+def convert_media_file(src_path: str, max_duration_seconds: int = 900) -> dict:
+    """Extract a 16 kHz mono 48 kbps MP3 from an uploaded audio/video file.
+    Same output format as download_audio(), so the rest of the pipeline is shared."""
+    src = Path(src_path)
+    job_dir = src.parent
+
+    try:
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=nw=1:nk=1", str(src)],
+            capture_output=True, text=True, timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        raise DownloadError("Timed out reading this file. Please try another file.")
+    if probe.returncode != 0:
+        raise DownloadError("This file could not be read. Please upload a valid audio or video file.")
+
+    duration = None
+    try:
+        duration = float(probe.stdout.strip().splitlines()[0])
+    except (ValueError, IndexError):
+        duration = None
+    if duration and duration > max_duration_seconds:
+        raise DownloadError(
+            f"This file is {int(duration/60)} min long, which exceeds the {int(max_duration_seconds/60)} min limit."
+        )
+
+    out = job_dir / "audio.mp3"
+    cmd = [
+        "ffmpeg", "-y", "-v", "error", "-i", str(src),
+        "-vn", "-ac", "1", "-ar", "16000", "-b:a", "48k",
+        "-t", str(int(max_duration_seconds) + 1),
+        str(out),
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    except subprocess.TimeoutExpired:
+        raise DownloadError("Converting this file took too long. Try a shorter file.")
+    if result.returncode != 0 or not out.exists():
+        raise DownloadError("Could not extract audio. Does this file contain an audio track?")
+
+    src.unlink(missing_ok=True)  # free disk space right away
+    return {
+        "wav_path": str(out),
+        "duration_seconds": duration,
+        "title": "upload",
+        "job_dir": str(job_dir),
+    }
