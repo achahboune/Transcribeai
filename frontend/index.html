@@ -378,6 +378,34 @@
   }
   @media (max-width:700px){.seo-grid{grid-template-columns:1fr !important;}}
 
+  /* How it works */
+  .how{margin-top:40px; text-align:center;}
+  .how h2{font-size:26px; line-height:1.2; margin:0;}
+  .how-sub{color:var(--text-dim); font-size:15px; margin:8px 0 22px;}
+  .how-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; text-align:left;}
+  .how-step{background:var(--bg-inset); border:1px solid var(--border); border-radius:12px; padding:18px;}
+  .how-num{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:var(--signal); color:#FFFFFF; font-weight:700; font-size:14px; margin-bottom:10px;}
+  .how-step h3{font-size:17px; margin:0 0 4px;}
+  .how-step p{font-size:14px; color:var(--text-dim); margin:0;}
+  .how-cta{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-top:16px; padding:16px 18px; border-radius:12px; background:var(--signal-soft); border:1px solid var(--signal); text-align:left; font-size:15px;}
+  .how-btn{background:var(--signal); color:#FFFFFF; border:none; border-radius:100px; padding:11px 22px; font-size:15px; font-weight:600; cursor:pointer; min-height:44px;}
+  .how-btn:hover{filter:brightness(1.1);}
+  .footer-links{max-width:960px; margin:40px auto 0; padding:0 24px; display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:center; font-size:12.5px;}
+  .footer-links a{color:var(--text-faint); text-decoration:none;}
+  .footer-links a:hover{color:var(--text-dim); text-decoration:underline;}
+  @media (max-width:700px){
+    .how h2{font-size:22px;}
+    .how{margin-top:28px;}
+    .how-sub{margin:6px 0 14px; font-size:14px;}
+    .how-grid{grid-template-columns:1fr; gap:8px;}
+    .how-step{display:grid; grid-template-columns:30px 1fr; column-gap:12px; align-items:center; padding:11px 14px;}
+    .how-num{grid-row:1 / span 2; margin:0; width:28px; height:28px; font-size:13px;}
+    .how-step h3{font-size:15px; margin:0;}
+    .how-step p{font-size:13px;}
+    .how-cta{flex-direction:column; align-items:stretch; text-align:center; padding:14px; margin-top:10px;}
+    .how-btn{width:100%;}
+  }
+
   /* Floating "back to top" button */
   .back-to-top{
     position:fixed; right:20px; bottom:20px;
@@ -495,24 +523,17 @@
     </div>
   </div>
 
-  <section class="seo-content card" aria-labelledby="seo-title" style="margin-top:48px;">
-    <h2 id="seo-title">AI video transcription made simple</h2>
-    <p>TranscribeAI turns public video links into readable text so you can search, edit, summarize, and reuse spoken content. Choose a language or let the service detect it automatically, then work from the generated transcript.</p>
-    <div class="seo-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;">
-      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">From popular video links</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Paste a public link from supported video platforms and start a transcription from one place.</p></div>
-      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Transcript to useful files</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Keep the transcript as text or use Unlimited exports for Word, PDF, SRT and VTT workflows.</p></div>
-      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Multilingual transcription</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">English, French, Arabic and other supported languages are available from the language selector.</p></div>
-      <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:8px;padding:16px;"><h3 style="font-size:17px;margin-bottom:6px;">Built for real workflows</h3><p style="font-size:14px;color:var(--text-dim);margin:0;">Use transcripts for research, interviews, content repurposing, subtitles, notes and searchable archives.</p></div>
+  <section class="how" aria-labelledby="how-title">
+    <h2 id="how-title">From video link to text in 3 steps</h2>
+    <p class="how-sub">No install. No upload. Just paste a link.</p>
+    <div class="how-grid">
+      <div class="how-step"><span class="how-num">1</span><h3>Paste a link</h3><p>TikTok, Instagram, Facebook or X. Any public video.</p></div>
+      <div class="how-step"><span class="how-num">2</span><h3>Get your text</h3><p>Fast AI transcription in 50+ languages.</p></div>
+      <div class="how-step"><span class="how-num">3</span><h3>Export anywhere</h3><p>Word, PDF, SRT, VTT, plus an AI summary.</p></div>
     </div>
-    <h2 style="margin-top:28px;font-size:22px;">Popular transcription tools</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:9px;">
-      <a href="/seo/tiktok-transcription.html">TikTok transcription</a>
-      <a href="/seo/instagram-transcription.html">Instagram transcription</a>
-      <a href="/seo/video-to-text.html">Video to text</a>
-      <a href="/seo/audio-to-text.html">Audio to text</a>
-      <a href="/seo/ai-subtitle-generator.html">AI subtitle generator</a>
-      <a href="/seo/arabic-transcription.html">Arabic transcription</a>
-      <a href="/seo/french-transcription.html">French transcription</a>
+    <div class="how-cta">
+      <div><b>Start free.</b> 300 minutes every month. No credit card.</div>
+      <button type="button" class="how-btn" onclick="window.scrollTo({top:0,behavior:'smooth'});setTimeout(function(){var i=document.getElementById('urlInput');if(i&&!('ontouchstart' in window)){i.removeAttribute('readonly');i.focus();}},400);">Try it now</button>
     </div>
   </section>
 
@@ -615,6 +636,14 @@
   </section>
 
 </div>
+
+<nav class="footer-links" aria-label="More tools">
+  <a href="/seo/tiktok-transcription.html">TikTok transcription</a>
+  <a href="/seo/instagram-transcription.html">Instagram transcription</a>
+  <a href="/seo/video-to-text.html">Video to text</a>
+  <a href="/seo/audio-to-text.html">Audio to text</a>
+  <a href="/seo/ai-subtitle-generator.html">Subtitle generator</a>
+</nav>
 
 <footer>
   <span>TranscribeAI</span>
