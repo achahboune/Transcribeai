@@ -331,6 +331,12 @@
     background:var(--bg-raised); border:1px solid var(--border); border-radius:14px;
     padding:28px; width:100%; max-width:380px; position:relative;
   }
+  .modal{max-height:calc(100% - 8px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  @media (max-width:600px){
+    input, select, textarea{font-size:16px !important;}
+    .modal-overlay{padding:12px; align-items:flex-start; overflow-y:auto;}
+    .modal{padding:22px 18px; margin:auto 0;}
+  }
   .modal h3{font-size:18px; font-weight:600; margin-bottom:4px;}
   .modal p.sub{color:var(--text-dim); font-size:13.5px; margin-bottom:20px;}
   .modal input{
@@ -626,10 +632,10 @@
     <p class="sub" id="authSub">Welcome back.</p>
     <div class="modal-error" id="authError"></div>
     <div class="modal-success" id="authSuccess"></div>
-    <form id="authForm" onsubmit="event.preventDefault();handleAuthSubmit();">
-    <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('authPassword').focus();}">
-    <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAuthSubmit();}">
-    <button type="button" class="btn-primary" id="authSubmitBtn" onclick="handleAuthSubmit()">
+    <form id="authForm" method="post" action="#" onsubmit="event.preventDefault();handleAuthSubmit();">
+    <input type="email" id="authEmail" name="email" placeholder="Email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('authPassword').focus();}">
+    <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();handleAuthSubmit();}">
+    <button type="submit" class="btn-primary" id="authSubmitBtn">
       <span class="spinner"></span>
       <span class="btn-label">Sign in</span>
     </button>
@@ -776,6 +782,8 @@ function switchAuthMode() {
   applyAuthModeUI();
 }
 function applyAuthModeUI() {
+  // Tell the browser/phone whether to offer saved passwords or suggest a new one.
+  document.getElementById('authPassword').setAttribute('autocomplete', authMode === 'signin' ? 'current-password' : 'new-password');
   document.getElementById('authTitle').textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
   document.getElementById('authSub').textContent = authMode === 'signin' ? 'Welcome back.' : 'Start with 300 free minutes a month.';
   document.getElementById('authSubmitBtn').querySelector('.btn-label').textContent = authMode === 'signin' ? 'Sign in' : 'Create account';
