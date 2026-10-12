@@ -92,6 +92,14 @@ SEO_PAGES = [
 ]
 
 
+BLOG_POSTS = [
+    "how-to-transcribe-a-tiktok-video",
+    "how-to-transcribe-an-instagram-reel",
+    "how-to-create-srt-subtitles-from-a-video",
+    "audio-to-text-tips-for-accurate-transcripts",
+]
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     return (
@@ -114,6 +122,15 @@ def sitemap_xml():
                 "0.8",
             )
             for slug in SEO_PAGES
+        ],
+        ("https://transcribeai.site/blog/", "weekly", "0.7"),
+        *[
+            (
+                f"https://transcribeai.site/blog/{slug}.html",
+                "monthly",
+                "0.6",
+            )
+            for slug in BLOG_POSTS
         ],
     ]
 
@@ -182,6 +199,31 @@ def serve_favicon():
         str(page),
         media_type="image/svg+xml",
     )
+
+
+def serve_blog_page(name: str):
+    page = FRONTEND_DIR / "blog" / f"{name}.html"
+
+    if not page.exists():
+        raise HTTPException(status_code=404, detail="Blog page not found.")
+
+    return FileResponse(
+        str(page),
+        media_type="text/html; charset=utf-8",
+    )
+
+
+@app.get("/blog")
+@app.get("/blog/")
+def blog_index():
+    return serve_blog_page("index")
+
+
+@app.get("/blog/{slug}.html")
+def blog_post(slug: str):
+    if slug not in BLOG_POSTS:
+        raise HTTPException(status_code=404, detail="Blog page not found.")
+    return serve_blog_page(slug)
 
 
 def serve_seo_page(slug: str):
