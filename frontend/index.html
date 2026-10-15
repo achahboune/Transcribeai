@@ -948,7 +948,11 @@ async function handleAuthSubmit() {
       clearVideoLink(); // successful sign-in only: on error we jump to catch and keep the link
       closeAuthModal();
     } else {
-      const { data, error } = await sb.auth.signUp({ email, password });
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: 'https://transcribeai.site/' }
+      });
       if (error) throw error;
 
       // Supabase returns success (no error) with an empty identities array
