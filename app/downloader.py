@@ -3,10 +3,31 @@ import uuid
 import json
 import shutil
 import tempfile
+import logging
 from pathlib import Path
+
+log = logging.getLogger("transcribeai.downloader")
 
 TMP_DIR = Path(tempfile.gettempdir()) / "transcribeai_jobs"
 TMP_DIR.mkdir(exist_ok=True)
+
+
+UPLOAD_HINT = "You can also save the video on your device and use Upload a file."
+
+
+def _friendly_download_error(stderr: str) -> str:
+    t = (stderr or "").lower()
+    if any(k in t for k in ("log in", "login", "sign in", "cookies", "comfortable for some audiences", "age-restricted", "age restricted")):
+        return "This video requires a login or is age-restricted, so it cannot be fetched from a link. " + UPLOAD_HINT
+    if "private" in t:
+        return "This video is private. Use a public link. " + UPLOAD_HINT
+    if "unsupported url" in t:
+        return "This link is not supported. Use a TikTok, Instagram, Facebook or X video link."
+    if any(k in t for k in ("unavailable", "removed", "not available", "404", "does not exist")):
+        return "This video is unavailable or was removed. " + UPLOAD_HINT
+    if any(k in t for k in ("429", "too many requests", "rate limit", "blocked")):
+        return "The platform is limiting requests right now. Try again in a few minutes. " + UPLOAD_HINT
+    return "Could not download this link. It may be private, restricted or unavailable. " + UPLOAD_HINT
 
 
 class DownloadError(Exception):
@@ -69,8 +90,10 @@ def download_audio(url: str, max_duration_seconds: int = 900) -> dict:
         raise DownloadError("Download timed out. Try a shorter video or check the link.")
 
     if result.returncode != 0:
-        stderr_tail = result.stderr.strip().splitlines()[-1] if result.stderr.strip() else "unknown error"
-        raise DownloadError(f"Could not download this link ({stderr_tail}). It may be private or unavailable.")
+        # Keep the technical details in the server log only; show a short,
+        # friendly message to the visitor (raw yt-dlp text is long and confusing).
+        log.warning("yt-dlp failed for %s: %s", url, result.stderr.strip()[-600:])
+        raise DownloadError(_friendly_download_error(result.stderr))
 
     audio_files = list(job_dir.glob("*.mp3"))
     if not audio_files:

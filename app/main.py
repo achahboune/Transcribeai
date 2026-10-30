@@ -156,7 +156,7 @@ def sitemap_xml():
     )
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def serve_index():
     page = FRONTEND_DIR / "index.html"
 
@@ -303,7 +303,7 @@ class TextRequest(BaseModel):
 # API
 # ---------------------------------------------------------------------------
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health():
     return {"status": "ok"}
 
