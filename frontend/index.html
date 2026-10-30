@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Unlimited Audio and Video Transcription | TranscribeAI</title>
 <meta name="description" content="Transcribe videos from TikTok, Instagram, Facebook and X, or upload your own audio and video files. Get clean transcripts, summaries and subtitle exports in minutes.">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -48,7 +48,7 @@
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=optional" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -81,7 +81,7 @@
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
-    min-height:100vh;
+    min-height:100vh; min-height:100svh;
     overflow-x:hidden;
   }
   a{color:inherit;}
@@ -114,7 +114,6 @@
   .platform-icon.tiktok{color:#111;} .platform-icon.instagram{color:#C13584;} .platform-icon.facebook{color:#1877F2;} .platform-icon.x-platform{color:#111;}
   .contact-head{text-align:center;}
   .contact-head p{max-width:600px; margin:8px auto 0;}
-  html{scroll-behavior:smooth;}
   .top-nav{grid-column:2; display:flex; gap:22px; font-size:14px; justify-self:center;}
   .top-nav a{color:var(--text-dim); text-decoration:none; padding:6px 2px;}
   .top-nav a:hover{color:var(--text); text-decoration:underline;}
@@ -193,12 +192,12 @@
 
   .btn-primary{
     background:var(--signal); color:#FFFFFF; font-weight:600; font-size:14px;
-    padding:11px 22px; border-radius:8px; transition:filter .15s ease, transform .1s ease;
+    padding:11px 22px; border-radius:8px; transition:filter .15s ease;
     display:flex; align-items:center; justify-content:center; gap:8px;
     flex:0 0 auto; white-space:nowrap;
   }
   .btn-primary:hover{filter:brightness(1.08);}
-  .btn-primary:active{transform:scale(0.99);}
+  .btn-primary:active{filter:brightness(0.95);}
   .btn-primary:disabled{background:var(--border); color:var(--text-faint); cursor:not-allowed;}
 
   .spinner{
@@ -211,15 +210,19 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   .status-line{
-    margin-top:12px; font-size:13px; color:var(--text-dim); font-family:var(--mono);
-    display:none;
+    margin-top:12px; font-size:13px; line-height:20px; min-height:20px; color:var(--text-dim); font-family:var(--mono);
+    display:block; visibility:hidden;
   }
-  .status-line.show{display:block;}
+  .status-line.show{visibility:visible;}
   .status-line.error{color:var(--danger);}
   .status-line, .transcript-text, .result-meta, .modal p{overflow-wrap:anywhere; word-break:break-word;}
   .card{min-width:0;}
   html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}
-  button, a, .upload-zone, .platform-option{touch-action:manipulation;}
+  html, body, button, a, input, select, .upload-zone, .platform-option{touch-action:manipulation;}
+  html{-webkit-tap-highlight-color:transparent; scroll-behavior:auto;}
+  @media (pointer:coarse){input, select, textarea{font-size:16px !important;}}
+  body.modal-open{overflow:hidden;}
+  .modal-overlay{overscroll-behavior:contain;}
 
   .usage-bar-wrap{margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:none;}
   .usage-bar-wrap.show{display:block;}
@@ -512,7 +515,7 @@
     </div>
     <label class="field-label">VIDEO LINK</label>
     <div class="url-row">
-      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public TikTok video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
+      <input type="text" class="url-input" id="urlInput" name="q_vlink_9f3" placeholder="Paste a public TikTok video link..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" enterkeyhint="go" data-lpignore="true" data-1p-ignore="true" data-form-type="other" onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter'){event.preventDefault();handleTranscribe();}">
     </div>
 
     <div class="or-row"><span>or</span></div>
@@ -831,11 +834,18 @@ async function handleSignOut() {
   resetPageState();
 }
 
+function armAutofillGuard() {
+  const f = document.getElementById('urlInput');
+  // Only on mouse devices: on phones a readonly field needs two taps to open the keyboard.
+  if (f && window.matchMedia('(hover:hover) and (pointer:fine)').matches) f.setAttribute('readonly', 'readonly');
+}
+document.addEventListener('DOMContentLoaded', armAutofillGuard);
+
 function clearVideoLink() {
   const urlField = document.getElementById('urlInput');
   if (!urlField) return;
   urlField.value = '';
-  urlField.setAttribute('readonly', 'readonly'); // re-arm the autofill guard
+  armAutofillGuard(); // desktop only
 }
 
 function resetPageState() {
@@ -860,6 +870,7 @@ function openAuthModal(mode, notice) {
   applyAuthModeUI();
   if (notice) document.getElementById('authSub').textContent = notice;
   document.getElementById('authOverlay').classList.add('show');
+  document.body.classList.add('modal-open');
   document.getElementById('authError').classList.remove('show');
   document.getElementById('authSuccess').classList.remove('show');
   clearAuthFields();
@@ -872,6 +883,7 @@ function clearAuthFields() {
 }
 function closeAuthModal() {
   document.getElementById('authOverlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
   showPayPalButtons();
 }
 function hidePayPalButtons() {
@@ -1151,7 +1163,7 @@ async function handleTranscribe() {
   statusLine.classList.remove('show', 'error');
 
   if (!url) {
-    statusLine.textContent = 'Paste a video link or upload a file first.';
+    statusLine.textContent = 'Paste a link or upload a file first.';
     statusLine.classList.add('show', 'error');
     return;
   }
