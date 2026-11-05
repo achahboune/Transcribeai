@@ -10,7 +10,9 @@ class Settings(BaseSettings):
     # Groq — hosts Whisper in the cloud (free tier), so transcription no
     # longer depends on Alaa's local machine being on.
     groq_api_key: str = ""
-    groq_summary_model: str = "llama-3.1-8b-instant"
+    groq_summary_model: str = "openai/gpt-oss-20b"
+    # Model used to translate transcripts. Empty = same as the summary model.
+    groq_translate_model: str = ""
     pyannote_auth_token: str = ""
 
     # PayPal Subscriptions — sandbox by default. Empty client_secret means

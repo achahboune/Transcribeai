@@ -6,8 +6,15 @@ credit card required. This replaces the previous local-Whisper-over-
 Cloudflare-tunnel setup — transcription no longer depends on Alaa's
 machine being on.
 """
+import asyncio
+import json
+import logging
+import re
+
 import httpx
 from .config import settings
+
+log = logging.getLogger("transcribeai.translate")
 
 
 class TranscriptionError(Exception):
@@ -174,6 +181,7 @@ async def summarize_transcript(text: str, language: str = "auto") -> str:
                     "model": settings.groq_summary_model,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.2,
+                    **({"reasoning_effort": "low"} if "gpt-oss" in settings.groq_summary_model else {}),
                 },
             )
     except httpx.RequestError as e:
@@ -181,3 +189,193 @@ async def summarize_transcript(text: str, language: str = "auto") -> str:
     if resp.status_code != 200:
         raise TranscriptionError(f"Summary engine returned an error ({resp.status_code}): {resp.text[:200]}")
     return resp.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
+
+# ---------------------------------------------------------------------------
+# Translation (transcript -> language chosen by the user)
+# ---------------------------------------------------------------------------
+LANGUAGE_NAMES = {
+    "en": "English", "fr": "French", "es": "Spanish", "ar": "Arabic",
+    "de": "German", "it": "Italian", "pt": "Portuguese", "nl": "Dutch",
+    "ru": "Russian", "zh": "Chinese (Simplified)", "ja": "Japanese",
+    "ko": "Korean", "tr": "Turkish", "hi": "Hindi", "pl": "Polish",
+}
+_NAME_TO_CODE = {
+    "english": "en", "french": "fr", "spanish": "es", "arabic": "ar",
+    "german": "de", "italian": "it", "portuguese": "pt", "dutch": "nl",
+    "russian": "ru", "chinese": "zh", "mandarin": "zh", "japanese": "ja",
+    "korean": "ko", "turkish": "tr", "hindi": "hi", "polish": "pl",
+}
+TRANSLATE_BATCH_CHARS = 3500
+TRANSLATE_BATCH_ITEMS = 80
+TRANSLATE_CONCURRENCY = 3
+
+
+def normalize_lang(value) -> str | None:
+    """Whisper returns names like 'english'; the UI uses codes like 'en'."""
+    if not value:
+        return None
+    v = str(value).strip().lower()
+    if v in LANGUAGE_NAMES:
+        return v
+    return _NAME_TO_CODE.get(v)
+
+
+def _translate_model() -> str:
+    return settings.groq_translate_model or settings.groq_summary_model
+
+
+async def _chat(prompt: str) -> str:
+    """One chat-completion call; returns the text content (raises on failure)."""
+    model = _translate_model()
+    body = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.1,
+    }
+    if "gpt-oss" in model:
+        body["reasoning_effort"] = "low"
+    for attempt in (1, 2):
+        async with httpx.AsyncClient(timeout=90) as client:
+            resp = await client.post(
+                GROQ_CHAT_URL,
+                headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+                json=body,
+            )
+        if resp.status_code == 429 and attempt == 1:
+            await asyncio.sleep(2)
+            continue
+        if resp.status_code != 200:
+            raise TranscriptionError(f"Translation engine error ({resp.status_code})")
+        return resp.json().get("choices", [{}])[0].get("message", {}).get("content", "") or ""
+    raise TranscriptionError("Translation engine is busy")
+
+
+def _parse_json_array(content: str, expected: int) -> list[str]:
+    t = content.strip()
+    t = re.sub(r"^```(?:json)?|```$", "", t, flags=re.M).strip()
+    start, end = t.find("["), t.rfind("]")
+    if start == -1 or end == -1:
+        raise ValueError("no JSON array")
+    arr = json.loads(t[start:end + 1])
+    if not isinstance(arr, list) or len(arr) != expected or not all(isinstance(x, str) for x in arr):
+        raise ValueError("wrong shape")
+    return arr
+
+
+async def _translate_batch(texts: list[str], target_name: str, stats: dict) -> list[str]:
+    prompt = (
+        f"Translate the following JSON array of transcript lines into {target_name}. "
+        "Rules: return exactly the same number of items in the same order; translate each "
+        "item on its own (never merge or split items); keep names, numbers and brand names; "
+        "no explanations. Output ONLY a JSON array of strings.\n\n"
+        + json.dumps(texts, ensure_ascii=False)
+    )
+    if stats.get("engine_down"):  # engine unreachable: do not hammer it
+        stats["failed"] += len(texts)
+        return list(texts)
+    try:
+        return _parse_json_array(await _chat(prompt), len(texts))
+    except (TranscriptionError, httpx.RequestError) as e:  # engine/network problem
+        log.warning("translation engine problem: %s", e)
+        stats["engine_down"] = True
+        stats["failed"] += len(texts)
+        return list(texts)
+    except Exception as e:  # bad JSON or wrong item count
+        log.warning("translation batch of %d failed: %s", len(texts), e)
+        if len(texts) > 1:  # retry with two smaller batches
+            mid = len(texts) // 2
+            left = await _translate_batch(texts[:mid], target_name, stats)
+            right = await _translate_batch(texts[mid:], target_name, stats)
+            return left + right
+        stats["failed"] += 1
+        return list(texts)  # keep the original line rather than losing it
+
+
+async def translate_texts(texts: list[str], target_code: str) -> tuple[list[str], int]:
+    """Translate lines, preserving order. Returns (translated_lines, failed_count)."""
+    target_name = LANGUAGE_NAMES[target_code]
+    batches: list[list[int]] = []
+    cur: list[int] = []
+    size = 0
+    for i, t in enumerate(texts):
+        if cur and (size + len(t) > TRANSLATE_BATCH_CHARS or len(cur) >= TRANSLATE_BATCH_ITEMS):
+            batches.append(cur)
+            cur, size = [], 0
+        cur.append(i)
+        size += len(t)
+    if cur:
+        batches.append(cur)
+
+    stats = {"failed": 0}
+    sem = asyncio.Semaphore(TRANSLATE_CONCURRENCY)
+
+    async def run(idx: list[int]):
+        async with sem:
+            return await _translate_batch([texts[i] for i in idx], target_name, stats)
+
+    results = await asyncio.gather(*(run(b) for b in batches))
+    out = list(texts)
+    for idx, translated in zip(batches, results):
+        for i, t in zip(idx, translated):
+            out[i] = t
+    return out, stats["failed"]
+
+
+def _split_text(text: str, limit: int = 900) -> list[str]:
+    parts = re.split(r"(?<=[.!?\u061f\u3002])\s+", text.strip())
+    chunks, cur = [], ""
+    for p in parts:
+        if cur and len(cur) + len(p) + 1 > limit:
+            chunks.append(cur)
+            cur = p
+        else:
+            cur = (cur + " " + p).strip()
+    if cur:
+        chunks.append(cur)
+    return chunks or [text]
+
+
+async def translate_result(result: dict, target: str) -> dict:
+    """Translate a transcription result into `target` (a UI language code).
+    target 'auto' (or the same language as the audio) leaves it untouched."""
+    out = dict(result)
+    detected = normalize_lang(result.get("detected_language"))
+    target = (target or "auto").strip().lower()
+    out["output_language"] = detected or result.get("detected_language")
+    out["translated"] = False
+    if target in ("", "auto") or target not in LANGUAGE_NAMES:
+        return out
+    out["output_language"] = target
+    if detected == target or not (result.get("text") or "").strip():
+        return out
+
+    segments = [
+        s for s in (result.get("segments") or [])
+        if str(s.get("text", "")).strip()
+    ]
+    try:
+        if segments:
+            lines = [str(s["text"]).strip() for s in segments]
+            translated, failed = await translate_texts(lines, target)
+            if failed >= len(lines):
+                raise TranscriptionError("all lines failed")
+            out["segments"] = [
+                {"id": i, "start": s.get("start"), "end": s.get("end"), "text": t}
+                for i, (s, t) in enumerate(zip(segments, translated))
+            ]
+            out["text"] = " ".join(t.strip() for t in translated).strip()
+        else:
+            pieces = _split_text(result["text"])
+            translated, failed = await translate_texts(pieces, target)
+            if failed >= len(pieces):
+                raise TranscriptionError("all lines failed")
+            out["text"] = " ".join(t.strip() for t in translated).strip()
+        out["translated"] = True
+        if failed:
+            out["translation_error"] = "Some lines could not be translated and are shown in the original language."
+    except Exception as e:
+        log.warning("translation failed: %s", e)
+        out["output_language"] = detected or result.get("detected_language")
+        out["translation_error"] = "Translation is unavailable right now. Showing the original text."
+    return out

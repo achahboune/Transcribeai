@@ -6,6 +6,8 @@ this bypasses RLS safely, since the request has already been authenticated.
 import httpx
 from fastapi import Header, HTTPException
 from .config import settings
+from . import apikeys
+from .features import has_plan
 
 
 class AuthError(Exception):
@@ -17,8 +19,24 @@ async def get_current_user(authorization: str = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
-    token = authorization.split(" ", 1)[1]
+    token = authorization.split(" ", 1)[1].strip()
 
+    # --- API key (tai_...) ---------------------------------------------------
+    if apikeys.is_api_key(token):
+        row = await apikeys.find_key(token)
+        if not row:
+            raise HTTPException(status_code=401, detail="Invalid or revoked API key.")
+        apikeys.check_rate(row["id"])
+        profile = await get_profile(row["user_id"])
+        if not has_plan(profile.get("plan", "free"), "creator"):
+            raise HTTPException(
+                status_code=403,
+                detail="API access requires the Unlimited plan.",
+            )
+        apikeys.touch_soon(row["id"])
+        return {"id": row["user_id"], "email": profile.get("email"), "auth": "api_key"}
+
+    # --- Supabase session token (website) -----------------------------------
     async with httpx.AsyncClient(timeout=10) as client:
         resp = await client.get(
             f"{settings.supabase_url}/auth/v1/user",

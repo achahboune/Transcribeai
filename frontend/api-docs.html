@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TranscribeAI API documentation</title><meta name="description" content="Transcribe video links and audio files, create summaries and export subtitles with the TranscribeAI API. Included in the Unlimited plan.">
+<link rel="canonical" href="https://transcribeai.site/api-docs"><meta name="robots" content="index, follow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2"><link rel="stylesheet" href="/seo.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=optional" rel="stylesheet">
+<style>.api-sec p,.api-sec li{font-size:16px}.api-sec ul{padding-left:22px}pre{background:#0f1b2d;color:#e8eefc;border-radius:10px;padding:14px;overflow-x:auto;font-size:13px;line-height:1.5;-webkit-overflow-scrolling:touch}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}p code,li code,td code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}.badge{display:inline-block;font-size:12px;font-weight:700;background:var(--signal);color:#fff;border-radius:100px;padding:2px 10px;margin-left:8px;vertical-align:middle}</style>
+</head><body><header><a class="brand" href="/"><span class="mark">T</span><span>TranscribeAI</span></a><nav class="nav"><a href="/">Transcribe</a><a href="/#pricing">Pricing</a><a href="/#faq-title">FAQ</a><a href="/blog/">Blog</a></nav></header>
+<main class="wrap"><section class="hero"><div class="eyebrow">Developers</div><h1>TranscribeAI API<span class="badge">beta</span></h1><p class="lead">Transcribe video links and files, create summaries and export subtitles from your own tools.</p></section><section class="card api-sec"><h2>Quick start</h2><p>The TranscribeAI API is included in the <b>Unlimited</b> plan. Create a key from the <b>API</b> button in the site header (when signed in), then send it in the <code>Authorization</code> header.</p><pre><code>curl https://transcribeai.site/api/me \
+  -H &quot;Authorization: Bearer tai_YOUR_KEY&quot;</code></pre></section><section class="card api-sec"><h2>Authentication and limits</h2><ul><li>Header: <code>Authorization: Bearer tai_YOUR_KEY</code>. Keys start with <code>tai_</code>; keep them secret and revoke them from the site if exposed.</li><li>Rate limit: <b>60 requests per minute</b> per key. Over the limit you get <code>429</code> with a <code>Retry-After</code> header.</li><li>Usage counts against your plan minutes (Unlimited: fair use of 80 hours per month). Files up to 60 minutes; uploads up to 1 GB.</li><li>Up to 5 active keys per account. A key stops working if the account is no longer on Unlimited.</li></ul></section><section class="card api-sec"><h2>Transcribe a video link</h2><p><code>POST /api/v1/transcribe</code>. Public TikTok, Instagram, Facebook and X links are supported. YouTube links are not supported.</p><pre><code>curl -X POST https://transcribeai.site/api/v1/transcribe \
+  -H &quot;Authorization: Bearer tai_YOUR_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;url&quot;: &quot;https://www.tiktok.com/@user/video/123&quot;, &quot;language&quot;: &quot;fr&quot;}&#x27;</code></pre><p>Response (shortened):</p><pre><code>{
+  &quot;transcript&quot;: &quot;Bonjour à tous...&quot;,
+  &quot;detected_language&quot;: &quot;english&quot;,
+  &quot;output_language&quot;: &quot;fr&quot;,
+  &quot;translated&quot;: true,
+  &quot;platform&quot;: &quot;tiktok&quot;,
+  &quot;duration_seconds&quot;: 42.5,
+  &quot;segments&quot;: [{&quot;start&quot;: 0.0, &quot;end&quot;: 3.2, &quot;text&quot;: &quot;Bonjour à tous&quot;}],
+  &quot;minutes_used_this_period&quot;: 1.2,
+  &quot;minutes_limit&quot;: 4800
+}</code></pre><p><code>language</code> is the <b>output language</b>. <code>auto</code> keeps the original spoken language. A code translates the transcript and its segments: <code>en</code>, <code>fr</code>, <code>es</code>, <code>ar</code>, <code>de</code>, <code>it</code>, <code>pt</code>, <code>nl</code>, <code>ru</code>, <code>zh</code>, <code>ja</code>, <code>ko</code>, <code>tr</code>, <code>hi</code>, <code>pl</code>. The response includes <code>detected_language</code> (spoken), <code>output_language</code>, <code>translated</code> (true/false) and, if something went wrong, <code>translation_error</code>.</p></section><section class="card api-sec"><h2>Transcribe an uploaded file</h2><p><code>POST /api/v1/transcribe-file</code>. Send the file as the raw request body. Accepted: MP3, WAV, M4A, AAC, OGG, OPUS, FLAC, WMA, MP4, MOV, MKV, WEBM, AVI, M4V, 3GP. The <code>language</code> query parameter works as above (output language, <code>auto</code> = no translation).</p><pre><code>curl -X POST &quot;https://transcribeai.site/api/v1/transcribe-file?language=auto&amp;filename=meeting.mp3&quot; \
+  -H &quot;Authorization: Bearer tai_YOUR_KEY&quot; \
+  -H &quot;Content-Type: application/octet-stream&quot; \
+  --data-binary @meeting.mp3</code></pre></section><section class="card api-sec"><h2>AI summary</h2><p><code>POST /api/v1/summary</code></p><pre><code>curl -X POST https://transcribeai.site/api/v1/summary \
+  -H &quot;Authorization: Bearer tai_YOUR_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;transcript&quot;: &quot;Full transcript text...&quot;, &quot;language&quot;: &quot;auto&quot;}&#x27;</code></pre><p>Response: <code>{"summary": "..."}</code></p></section><section class="card api-sec"><h2>Export subtitles and documents</h2><p><code>POST /api/v1/export/{format}</code> where format is <code>txt</code>, <code>docx</code>, <code>pdf</code>, <code>srt</code> or <code>vtt</code>. Pass the transcript and the <code>segments</code> returned by the transcription call.</p><pre><code>curl -X POST https://transcribeai.site/api/v1/export/srt \
+  -H &quot;Authorization: Bearer tai_YOUR_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#x27;{&quot;transcript&quot;: &quot;Hello everyone&quot;, &quot;segments&quot;: [{&quot;start&quot;: 0.0, &quot;end&quot;: 3.2, &quot;text&quot;: &quot;Hello everyone&quot;}]}&#x27; \
+  -o subtitles.srt</code></pre></section><section class="card api-sec"><h2>Use it in n8n or Python</h2><p><b>n8n:</b> add an <i>HTTP Request</i> node, method <code>POST</code>, URL <code>https://transcribeai.site/api/v1/transcribe</code>, header <code>Authorization</code> = <code>Bearer tai_YOUR_KEY</code>, body type JSON.</p><pre><code>import requests
+
+r = requests.post(
+    &quot;https://transcribeai.site/api/v1/transcribe&quot;,
+    headers={&quot;Authorization&quot;: &quot;Bearer tai_YOUR_KEY&quot;},
+    json={&quot;url&quot;: &quot;https://www.tiktok.com/@user/video/123&quot;, &quot;language&quot;: &quot;auto&quot;},
+    timeout=300,
+)
+print(r.json()[&quot;transcript&quot;])</code></pre></section><section class="card api-sec"><h2>Errors</h2><table><thead><tr><th>Code</th><th>Meaning</th></tr></thead><tbody><tr><td>400</td><td>Invalid request, unsupported file type, or the link could not be downloaded</td></tr><tr><td>401</td><td>Missing, invalid or revoked API key</td></tr><tr><td>402</td><td>Monthly minutes used up</td></tr><tr><td>403</td><td>The account is not on the Unlimited plan</td></tr><tr><td>413</td><td>File too large</td></tr><tr><td>429</td><td>Rate limit reached, retry after the delay in <code>Retry-After</code></td></tr><tr><td>502</td><td>The transcription service returned an error, try again</td></tr></tbody></table><p>Errors are JSON: <code>{"detail": "message"}</code></p></section>
+<section class="card"><h2>Get your API key</h2><p>Sign in, open the <b>API</b> button in the header and create a key. API access is part of the Unlimited plan.</p><a class="cta" href="/#pricing">See the Unlimited plan</a></section></main>
+<footer><a href="/">TranscribeAI</a> · Tangier, Morocco</footer></body></html>

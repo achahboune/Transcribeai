@@ -406,6 +406,25 @@
   .progress-track.show{display:block;}
   .progress-fill{height:100%; width:0; background:var(--signal); transition:width .2s;}
 
+  @media (max-width:480px){ #authArea .pill{display:none;} }
+  #authArea{flex-wrap:nowrap; white-space:nowrap;}
+
+  /* API keys */
+  .api-note{font-size:13px; color:var(--text-dim); margin:0 0 12px;}
+  .key-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--bg-inset); margin-bottom:8px;}
+  .key-info{min-width:0; flex:1;}
+  .key-info b{display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .key-info span{display:block; font-size:12px; color:var(--text-faint); font-family:var(--mono);}
+  .key-revoke{flex:none; background:#FFFFFF; border:1px solid var(--border); border-radius:8px; padding:7px 10px; font-size:13px; cursor:pointer; color:var(--danger);}
+  .key-new{border:1.5px solid var(--signal); background:var(--signal-soft); border-radius:10px; padding:12px; margin:10px 0;}
+  .key-new code{display:block; font-family:var(--mono); font-size:13px; word-break:break-all; overflow-wrap:anywhere; margin:6px 0 10px; user-select:all;}
+  .api-create{display:flex; gap:8px; margin:10px 0 4px;}
+  .api-create input{flex:1 1 auto; min-width:0; width:auto; margin:0;}
+  .api-create .btn-primary{flex:none; width:auto; padding:0 16px; margin:0; min-height:44px;}
+  #apiOverlay .modal{overflow-x:hidden;}
+  .key-new, .key-row{max-width:100%; box-sizing:border-box;}
+  .api-links{font-size:13px; margin-top:12px;}
+
   /* Hero extras, Google, mini plans */
   .hero-free{font-size:15px; margin-top:6px;}
   .google-btn{display:none; align-items:center; justify-content:center; gap:10px; background:#FFFFFF; color:#1F1F1F; border:1px solid #747775; border-radius:100px; padding:10px 18px; font-size:15px; font-weight:600; cursor:pointer; min-height:44px;}
@@ -491,6 +510,7 @@
     <a href="#pricing">Pricing</a>
     <a href="#faq-title">FAQ</a>
     <a href="/blog/">Blog</a>
+    <a href="/api-docs">API</a>
   </nav>
   <div class="auth-area" id="authArea">
     <span class="btn-ghost" onclick="openAuthModal('signin')">Sign in</span>
@@ -527,10 +547,10 @@
     </div>
     <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
 
-    <label class="field-label">LANGUAGE</label>
+    <label class="field-label" for="langSelect">TRANSLATE TO</label>
     <div class="controls-row">
       <select class="lang-select" id="langSelect">
-        <option value="auto">Detect automatically</option>
+        <option value="auto">Original language (no translation)</option>
         <option value="en">English</option>
         <option value="fr">French</option>
         <option value="es">Spanish</option>
@@ -582,7 +602,13 @@
       <button class="copy-btn" onclick="handleExport('vtt')"><span class="fmt-ico fmt-vtt">VTT</span><span>VTT</span></button>
     </div>
     <div id="summaryCard" style="display:none; margin-top:16px; padding:14px; border-top:1px solid var(--line)">
-      <div class="result-title">AI SUMMARY</div>
+      <div class="result-head">
+        <span class="result-title">AI SUMMARY</span>
+        <button class="copy-btn" id="copySummaryBtn" onclick="handleCopySummary()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="copySummaryLabel">Copy</span>
+        </button>
+      </div>
       <div id="summaryText" class="transcript-text" style="margin-top:8px; white-space:pre-wrap"></div>
     </div>
   </div>
@@ -597,7 +623,7 @@
     <p class="how-sub">No install. Paste a link or upload a file.</p>
     <div class="how-grid">
       <div class="how-step"><span class="how-num">1</span><h3>Paste a link or upload</h3><p>TikTok, Instagram, Facebook, X, or your own audio and video files.</p></div>
-      <div class="how-step"><span class="how-num">2</span><h3>Get your text</h3><p>Fast AI transcription in 50+ languages.</p></div>
+      <div class="how-step"><span class="how-num">2</span><h3>Get your text</h3><p>Fast AI transcription, translated into the language you choose.</p></div>
       <div class="how-step"><span class="how-num">3</span><h3>Export anywhere</h3><p>Word, PDF, SRT, VTT, plus an AI summary.</p></div>
     </div>
     <div class="how-cta">
@@ -718,12 +744,35 @@
   <a href="/seo/audio-to-text.html">Audio to text</a>
   <a href="/seo/ai-subtitle-generator.html">Subtitle generator</a>
   <a href="/blog/">Blog</a>
+  <a href="/api-docs">API</a>
 </nav>
 
 <footer>
   <span>TranscribeAI</span>
   <span>Tangier, Morocco</span>
 </footer>
+
+<div class="modal-overlay" id="apiOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="apiTitle">
+    <button class="modal-close" onclick="closeApiModal()" aria-label="Close">&times;</button>
+    <h3 id="apiTitle">API keys</h3>
+    <p class="sub">Use TranscribeAI from your own scripts, n8n or Zapier.</p>
+    <div class="modal-error" id="apiError"></div>
+    <div id="apiLocked" style="display:none">
+      <p class="api-note">API access is included in the <b>Unlimited</b> plan.</p>
+      <button type="button" class="btn-primary" onclick="closeApiModal();document.getElementById('pricing').scrollIntoView();"><span class="btn-label">See Unlimited</span></button>
+    </div>
+    <div id="apiMain" style="display:none">
+      <div class="api-create">
+        <input type="text" id="apiKeyName" placeholder="Key name (e.g. n8n)" maxlength="60" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <button type="button" class="btn-primary" id="apiCreateBtn" onclick="createApiKey()"><span class="btn-label">Create</span></button>
+      </div>
+      <div id="apiNewKey"></div>
+      <div id="apiKeyList"></div>
+      <p class="api-links"><a href="/api-docs" target="_blank" rel="noopener">API documentation</a></p>
+    </div>
+  </div>
+</div>
 
 <button type="button" class="back-to-top" id="backToTop" aria-label="Back to top" title="Back to top">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -809,6 +858,7 @@ function updateAuthUI() {
     const email = currentSession.user.email;
     area.innerHTML = `
       <span class="pill">${email}</span>
+      <span class="btn-ghost" onclick="openApiModal()">API</span>
       <span class="btn-ghost" onclick="handleSignOut()">Sign out</span>
     `;
     if (freeBtn) freeBtn.textContent = 'Your current plan';
@@ -828,6 +878,84 @@ function handleFreePlanClick() {
   if (currentSession) return; // already signed in — Free is their default plan, nothing to do
   openAuthModal('signup');
 }
+
+// ---------- API keys ----------
+function apiHeaders() {
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${currentSession.access_token}` };
+}
+function showApiError(msg) {
+  const el = document.getElementById('apiError');
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+}
+function escapeHtml(t) {
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function closeApiModal() {
+  document.getElementById('apiOverlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
+  document.getElementById('apiNewKey').innerHTML = '';
+}
+async function openApiModal() {
+  if (!currentSession) { openAuthModal('signin'); return; }
+  showApiError('');
+  document.getElementById('apiOverlay').classList.add('show');
+  document.body.classList.add('modal-open');
+  const isPaid = (window.currentPlan || 'free') !== 'free';
+  document.getElementById('apiLocked').style.display = isPaid ? 'none' : 'block';
+  document.getElementById('apiMain').style.display = isPaid ? 'block' : 'none';
+  if (isPaid) await loadApiKeys();
+}
+async function loadApiKeys() {
+  const list = document.getElementById('apiKeyList');
+  try {
+    const res = await fetch(`${API_BASE}/api/keys`, { headers: apiHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Could not load your keys.');
+    const keys = data.keys || [];
+    list.innerHTML = keys.length ? keys.map(k => `
+      <div class="key-row">
+        <div class="key-info"><b>${escapeHtml(k.name)}</b><span>${escapeHtml(k.prefix)}…  ·  ${k.last_used_at ? 'used ' + new Date(k.last_used_at).toLocaleDateString() : 'never used'}</span></div>
+        <button type="button" class="key-revoke" onclick="revokeApiKey('${escapeHtml(k.id)}')">Revoke</button>
+      </div>`).join('') : '<p class="api-note">No API key yet. Create your first key above.</p>';
+  } catch (e) { showApiError(e.message); }
+}
+async function createApiKey() {
+  showApiError('');
+  const btn = document.getElementById('apiCreateBtn');
+  btn.disabled = true;
+  try {
+    const name = document.getElementById('apiKeyName').value.trim() || 'My key';
+    const res = await fetch(`${API_BASE}/api/keys`, { method: 'POST', headers: apiHeaders(), body: JSON.stringify({ name }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Could not create the key.');
+    document.getElementById('apiKeyName').value = '';
+    document.getElementById('apiNewKey').innerHTML = `
+      <div class="key-new">
+        <b>Copy your key now.</b> <span class="api-note">It will not be shown again.</span>
+        <code id="apiNewKeyText">${escapeHtml(data.key)}</code>
+        <button type="button" class="key-revoke" style="color:var(--text)" onclick="copyApiKey(this)">Copy key</button>
+      </div>`;
+    await loadApiKeys();
+  } catch (e) { showApiError(e.message); }
+  btn.disabled = false;
+}
+async function copyApiKey(btn) {
+  const text = document.getElementById('apiNewKeyText').textContent;
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
+  catch (e) { btn.textContent = 'Select and copy'; }
+}
+async function revokeApiKey(id) {
+  if (!confirm('Revoke this key? Anything using it will stop working.')) return;
+  showApiError('');
+  try {
+    const res = await fetch(`${API_BASE}/api/keys/${encodeURIComponent(id)}`, { method: 'DELETE', headers: apiHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Could not revoke the key.');
+    await loadApiKeys();
+  } catch (e) { showApiError(e.message); }
+}
+document.getElementById('apiOverlay').addEventListener('click', (e) => { if (e.target.id === 'apiOverlay') closeApiModal(); });
 
 async function handleSignOut() {
   await sb.auth.signOut();
@@ -1041,8 +1169,13 @@ function showTranscriptResult(data) {
   document.getElementById('transcriptText').textContent = data.transcript;
   lastResult = data;
   document.getElementById('featureActions').style.display = 'flex';
-  document.getElementById('resultMeta').textContent = `TRANSCRIPT · ${String(data.platform || '').toUpperCase()} · ${Math.round(data.duration_seconds || 0)}s`;
+  const langSel = document.getElementById('langSelect');
+  const langName = langSel.options[langSel.selectedIndex] ? langSel.options[langSel.selectedIndex].text : '';
+  document.getElementById('resultMeta').textContent = `TRANSCRIPT · ${String(data.platform || '').toUpperCase()} · ${Math.round(data.duration_seconds || 0)}s` + (data.translated ? ` · TRANSLATED TO ${langName.toUpperCase()}` : '');
   document.getElementById('resultCard').classList.add('show');
+  document.getElementById('summaryCard').style.display = 'none';
+  const note = document.getElementById('statusLine');
+  if (data.translation_error) { note.textContent = data.translation_error; note.classList.add('show', 'error'); }
 }
 
 // ---------- File upload ----------
@@ -1129,7 +1262,7 @@ function handleUploadTranscribe() {
   };
   xhr.upload.onload = () => {
     fill.style.width = '100%';
-    statusLine.textContent = 'Transcribing — this can take a minute for longer files…';
+    statusLine.textContent = (document.getElementById('langSelect').value !== 'auto' ? 'Transcribing and translating' : 'Transcribing') + ' — this can take a minute for longer files…';
   };
   xhr.onload = () => {
     let data = {};
@@ -1173,7 +1306,7 @@ async function handleTranscribe() {
   }
 
   btn.classList.add('loading'); btn.disabled = true;
-  statusLine.textContent = 'Downloading and transcribing — this can take a minute for longer videos…';
+  statusLine.textContent = (document.getElementById('langSelect').value !== 'auto' ? 'Downloading, transcribing and translating' : 'Downloading and transcribing') + ' — this can take a minute for longer videos…';
   statusLine.classList.add('show');
   document.getElementById('resultCard').classList.remove('show');
 
@@ -1201,15 +1334,31 @@ async function handleTranscribe() {
   }
 }
 
-function handleCopy() {
-  const text = document.getElementById('transcriptText').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('copyBtn');
-    const label = document.getElementById('copyLabel');
+function copyWithFeedback(text, btnId, labelId) {
+  const btn = document.getElementById(btnId);
+  const label = document.getElementById(labelId);
+  const done = () => {
     btn.classList.add('copied');
     label.textContent = 'Copied';
     setTimeout(() => { btn.classList.remove('copied'); label.textContent = 'Copy'; }, 1800);
-  });
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { label.textContent = 'Select and copy'; }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+
+function handleCopy() {
+  copyWithFeedback(document.getElementById('transcriptText').textContent, 'copyBtn', 'copyLabel');
+}
+
+function handleCopySummary() {
+  copyWithFeedback(document.getElementById('summaryText').textContent, 'copySummaryBtn', 'copySummaryLabel');
 }
 
 async function handleSummary() {
@@ -1222,7 +1371,7 @@ async function handleSummary() {
     const res = await fetch(`${API_BASE}/api/summary`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentSession.access_token}` },
-      body: JSON.stringify({ transcript: lastResult.transcript, language: lastResult.detected_language || 'auto' })
+      body: JSON.stringify({ transcript: lastResult.transcript, language: lastResult.output_language || lastResult.detected_language || 'auto' })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Summary failed.');

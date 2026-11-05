@@ -27,6 +27,7 @@ from .downloader import (
 )
 from .groq_transcriber import (
     transcribe_audio,
+    translate_result,
     summarize_transcript,
     check_groq_alive,
     groq_configured,
@@ -34,6 +35,7 @@ from .groq_transcriber import (
 )
 from .auth import get_current_user, get_profile, update_minutes_used
 from .billing import router as billing_router
+from .apikeys import create_key, list_keys, revoke_key
 from .contact import router as contact_router
 from .features import (
     clean_dictionary,
@@ -124,6 +126,7 @@ def sitemap_xml():
             for slug in SEO_PAGES
         ],
         ("https://transcribeai.site/blog/", "weekly", "0.7"),
+        ("https://transcribeai.site/api-docs", "monthly", "0.5"),
         *[
             (
                 f"https://transcribeai.site/blog/{slug}.html",
@@ -351,6 +354,49 @@ async def me(user=Depends(get_current_user)):
     }
 
 
+class KeyCreate(BaseModel):
+    name: str = Field(default="My key", max_length=60)
+
+
+def _require_session(user: dict) -> None:
+    if user.get("auth") == "api_key":
+        raise HTTPException(status_code=403, detail="API keys cannot manage API keys.")
+
+
+@app.get("/api/keys")
+async def api_keys_list(user=Depends(get_current_user)):
+    _require_session(user)
+    return {"keys": await list_keys(user["id"])}
+
+
+@app.post("/api/keys")
+async def api_keys_create(payload: KeyCreate, user=Depends(get_current_user)):
+    _require_session(user)
+    profile = await get_profile(user["id"])
+    if not has_plan(profile.get("plan", "free"), "creator"):
+        raise HTTPException(
+            status_code=402,
+            detail="API access is available on the Unlimited plan.",
+        )
+    return await create_key(user["id"], payload.name.strip() or "My key")
+
+
+@app.delete("/api/keys/{key_id}")
+async def api_keys_revoke(key_id: str, user=Depends(get_current_user)):
+    _require_session(user)
+    await revoke_key(user["id"], key_id)
+    return {"revoked": True}
+
+
+@app.get("/api-docs")
+@app.get("/api-docs/")
+def api_docs():
+    page = FRONTEND_DIR / "api-docs.html"
+    if not page.exists():
+        raise HTTPException(status_code=404, detail="Not found.")
+    return FileResponse(str(page), media_type="text/html; charset=utf-8")
+
+
 @app.get("/api/capabilities")
 async def capabilities(user=Depends(get_current_user)):
     profile = await get_profile(user["id"])
@@ -444,11 +490,14 @@ async def transcribe(
         job_dir = download["job_dir"]
 
         # 3. Transcribe via Groq.
+        # The language picker is the OUTPUT language: Whisper always detects the
+        # spoken language, then the text is translated if a language was chosen.
         result = await transcribe_audio(
             download["wav_path"],
-            language=payload.language,
+            language="auto",
             dictionary=dictionary,
         )
+        result = await translate_result(result, payload.language)
 
         # 4. Update quota usage.
         actual_duration = (
@@ -467,6 +516,9 @@ async def transcribe(
         return {
             "transcript": result["text"],
             "detected_language": result.get("detected_language"),
+            "output_language": result.get("output_language"),
+            "translated": result.get("translated", False),
+            "translation_error": result.get("translation_error"),
             "platform": platform,
             "duration_seconds": actual_duration,
             "segments": result.get("segments", []),
@@ -574,8 +626,9 @@ async def transcribe_file(
             )
 
         result = await transcribe_audio(
-            converted["wav_path"], language=language, dictionary=None
+            converted["wav_path"], language="auto", dictionary=None
         )
+        result = await translate_result(result, language)
 
         actual_duration = result.get("duration") or converted.get("duration_seconds") or 0
         new_total = minutes_used + (actual_duration / 60.0)
@@ -584,6 +637,9 @@ async def transcribe_file(
         return {
             "transcript": result["text"],
             "detected_language": result.get("detected_language"),
+            "output_language": result.get("output_language"),
+            "translated": result.get("translated", False),
+            "translation_error": result.get("translation_error"),
             "platform": "upload",
             "duration_seconds": actual_duration,
             "segments": result.get("segments", []),
